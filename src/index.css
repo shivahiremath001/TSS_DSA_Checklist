@@ -1,0 +1,162 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800;900&display=swap");
+
+@import "tailwindcss";
+
+/* ─── Design Tokens ────────────────────────────────────────── */
+@theme {
+  --color-black:    #000000;
+  --color-white:    #ffffff;
+  --color-grey-950: #080808;
+  --color-grey-900: #0f0f0f;
+  --color-grey-800: #1a1a1a;
+  --color-grey-700: #2a2a2a;
+  --color-grey-600: #3d3d3d;
+  --color-grey-500: #5a5a5a;
+  --color-grey-400: #8a8a8a;
+  --color-grey-300: #b0b0b0;
+  --color-grey-200: #d0d0d0;
+  --color-grey-100: #f0f0f0;
+
+  --font-display: "Barlow Condensed", "Space Grotesk", ui-sans-serif, system-ui;
+  --font-sans:    "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* ─── Base Reset ────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: #000;
+  color: #ffffff;
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+/* ─── Grain / Noise Texture Overlay ────────────────────────── */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  opacity: 0.035;
+}
+
+#root { position: relative; z-index: 1; }
+
+/* ─── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #3d3d3d; }
+
+/* ─── Focus ─────────────────────────────────────────────────── */
+:focus-visible { outline: 1px solid #fff; outline-offset: 2px; border-radius: 2px; }
+
+/* ─── Links ─────────────────────────────────────────────────── */
+a { color: inherit; text-decoration: none; }
+
+/* ─── Transitions ───────────────────────────────────────────── */
+button, a, input, select {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: 120ms;
+  transition-timing-function: ease;
+}
+
+/* ─── Animations ────────────────────────────────────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter { animation: fade-up 0.35s ease-out forwards; }
+
+@keyframes progress-fill {
+  from { width: 0% }
+}
+.progress-bar-fill { animation: progress-fill 1s ease-out forwards; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.animate-spin { animation: spin 0.7s linear infinite; }
+
+/* ─── Display / Hero Typography ────────────────────────────── */
+.display-heading {
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  line-height: 0.92;
+}
+
+/* ─── Mono Brand Tag ────────────────────────────────────────── */
+.brand-tag {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #fff;
+  line-height: 1.2;
+}
+
+/* ─── Card ──────────────────────────────────────────────────── */
+.card {
+  background: #0f0f0f;
+  border: 1px solid #1a1a1a;
+  border-radius: 0px;
+}
+
+/* ─── Input ─────────────────────────────────────────────────── */
+.input-field {
+  width: 100%;
+  background: #000;
+  border: 1px solid #2a2a2a;
+  color: #fff;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  font-family: "Space Grotesk", sans-serif;
+  outline: none;
+  transition: border-color 120ms ease;
+}
+.input-field::placeholder { color: #3d3d3d; }
+.input-field:focus { border-color: #fff; }
+.input-field.mono { font-family: "JetBrains Mono", monospace; text-transform: uppercase; }
+
+/* ─── Buttons ───────────────────────────────────────────────── */
+.btn-primary {
+  background: #fff;
+  color: #000;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.75rem 1.75rem;
+  border: 1px solid #fff;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.btn-primary:hover { background: transparent; color: #fff; }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.btn-secondary {
+  background: transparent;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.625rem 1.25rem;
+  border: 1px solid #2a2a2a;
+  cursor: pointer;
+}
+.btn-secondary:hover { border-color: #5a5a5a; color: #fff; }
+
+/* ─── Badge ─────────────────────────────────────────────────── */
+.badge-easy   { color: #fff;   background: #1a1a1a; border: 1px solid #2a2a2a; }
+.badge-medium { color: #d0d0d0; background: #0f0f0f; border: 1px solid #2a2a2a; }
+.badge-hard   { color: #8a8a8a; background: #000;    border: 1px solid #1a1a1a; }
