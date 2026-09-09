@@ -56,8 +56,8 @@ export default function LoginPage() {
     transition: "border-color 120ms ease",
   };
   const lbl: React.CSSProperties = {
-    fontFamily: "'JetBrains Mono', monospace", fontSize: "0.62rem",
-    textTransform: "uppercase" as const, letterSpacing: "0.12em", color: "#777",
+    fontFamily: "'JetBrains Mono', monospace", fontSize: "0.75rem", fontWeight: 700,
+    textTransform: "uppercase" as const, letterSpacing: "0.12em", color: "#888",
   };
 
   return (
@@ -95,7 +95,7 @@ export default function LoginPage() {
           >
             &lt;THE<br />
             SOFTWARE<br />
-            SOCIETY/&gt;]
+            SOCIETY/&gt;
           </div>
 
           {/* Main hero text */}
@@ -142,41 +142,6 @@ export default function LoginPage() {
               A selective collective of engineers pushing the boundaries of algorithmic excellence.
             </p>
 
-            {/* CTA-style register link styled like the reference "Join Community" button */}
-            <Link
-              to="/register"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                marginTop: "1.75rem",
-                background: "#fff",
-                color: "#000",
-                fontWeight: 700,
-                fontSize: "0.8rem",
-                letterSpacing: "0.06em",
-                padding: "0.7rem 1.5rem",
-                border: "1px solid #fff",
-                cursor: "pointer",
-                textDecoration: "none",
-                transition: "background 120ms ease, color 120ms ease",
-              }}
-              onMouseEnter={(e) => {
-                const el = e.currentTarget as HTMLAnchorElement;
-                el.style.background = "transparent";
-                el.style.color = "#fff";
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget as HTMLAnchorElement;
-                el.style.background = "#fff";
-                el.style.color = "#000";
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-              </svg>
-              Join Community
-            </Link>
           </div>
 
           {/* Spacer for bottom alignment */}
@@ -194,31 +159,6 @@ export default function LoginPage() {
         >
           <div style={{ width: "100%", maxWidth: "360px" }}>
 
-            {/* Logo box */}
-            <div
-              style={{
-                width: "48px",
-                height: "48px",
-                border: "1px solid #222",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: "1.75rem",
-                overflow: "hidden",
-              }}
-            >
-              <img
-                src="/logo.png"
-                alt="Club Logo"
-                className="h-10 w-auto object-contain"
-                onError={(e) => {
-                  const el = e.target as HTMLImageElement;
-                  el.style.display = "none";
-                  el.parentElement!.innerHTML =
-                    '<span style="font-family:\'JetBrains Mono\',monospace;font-size:0.6rem;color:#fff;font-weight:700;line-height:1.2;text-align:center;">TSS</span>';
-                }}
-              />
-            </div>
 
             <h2
               style={{ fontSize: "1.5rem", fontWeight: 700, color: "#fff", marginBottom: "0.35rem" }}
@@ -236,7 +176,7 @@ export default function LoginPage() {
                 <input
                   id="login-usn" type="text" value={usn}
                   onChange={(e) => setUsn(e.target.value.toUpperCase())}
-                  required autoComplete="username" placeholder="e.g. 1BM22CS001"
+                  required autoComplete="username" placeholder="e.g. 2VDXXCSXXX"
                   style={{ ...inp, fontFamily: "'JetBrains Mono',monospace", textTransform: "uppercase" }}
                   onFocus={(e) => (e.target.style.borderColor = "#fff")}
                   onBlur={(e) => (e.target.style.borderColor = "#333")}

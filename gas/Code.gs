@@ -14,8 +14,8 @@ var TOTAL_PROBLEMS = 150;
 // Column index (1-based) where Q1 starts in Users sheet (col J = 10)
 var Q_START_COL    = 10;
 
-// OTP expiry: 5 minutes in milliseconds
-var OTP_EXPIRY_MS  = 5 * 60 * 1000;
+// OTP expiry: 3 minutes in milliseconds
+var OTP_EXPIRY_MS  = 3 * 60 * 1000;
 
 // Column (1-based) that stores last password-reset timestamp (epoch ms)
 // Sits after Q1-Q150 (cols J=10 to col 159), so col 160
@@ -35,7 +35,6 @@ function doPost(e) {
     var result;
 
     switch (action) {
-      case "register":       result = register(request);       break;
       case "login":          result = login(request);          break;
       case "updateProgress": result = updateProgress(request); break;
       case "getLeaderboard": result = getLeaderboard();        break;
@@ -43,6 +42,7 @@ function doPost(e) {
       case "changePassword": result = changePassword(request); break;
       case "sendOtp":        result = sendOtp(request);        break;
       case "verifyOtp":      result = verifyOtp(request);      break;
+      case "updateProfile":  result = updateProfile(request);  break;
       default:
         result = { success: false, message: "Unknown action: " + action };
     }
@@ -130,49 +130,7 @@ function findPendingRow(sheet, usn) {
   return -1;
 }
 
-// ============================================================
-//  ACTION: register  (legacy – kept for backwards compatibility)
-//  Payload: firstName, lastName, usn, email, leetcodeUsername, password (SHA-256 hex)
-// ============================================================
-function register(req) {
-  var sheet = getSheet(USERS_SHEET);
 
-  // Check USN uniqueness
-  if (findUserRow(sheet, req.usn) !== -1) {
-    return { success: false, message: "USN already registered." };
-  }
-
-  // Check email uniqueness
-  var data = sheet.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) {
-    if (String(data[i][4]).toLowerCase() === String(req.email).toLowerCase()) {
-      return { success: false, message: "Email already registered." };
-    }
-  }
-
-  var lastRow = sheet.getLastRow();
-  var newRow  = lastRow + 1;
-  var slNo    = lastRow; // header is row 1, so first user = sl 1
-
-  // Build the row: A-I then Q1-Q150
-  var rowData = [slNo, req.firstName, req.lastName, req.usn.toUpperCase(),
-                 req.email, req.leetcodeUsername, req.password, 0, 0];
-
-  // Append 150 zeros for Q1–Q150
-  for (var q = 0; q < TOTAL_PROBLEMS; q++) {
-    rowData.push(0);
-  }
-
-  sheet.appendRow(rowData);
-
-  // Set formulas for Total Solved (col H=8) and Percentage (col I=9)
-  var hCell = sheet.getRange(newRow, 8);
-  var iCell = sheet.getRange(newRow, 9);
-  hCell.setFormula("=COUNTIF(J" + newRow + ":FC" + newRow + ",1)");
-  iCell.setFormula("=ROUND((H" + newRow + "/150)*100,1)");
-
-  return { success: true, message: "Registration successful." };
-}
 
 // ============================================================
 //  ACTION: sendOtp
@@ -188,6 +146,15 @@ function sendOtp(req) {
 
   if (!pendingSheet) {
     return { success: false, message: "PendingUsers sheet not found. Please create it." };
+  }
+
+  // ── Strict format validation ───────────────────────────────────
+  if (!/^2VD\d{2}[A-Z]{2}\d{3}$/i.test(String(req.usn))) {
+    return { success: false, message: "Invalid USN format. Must start with 2VD." };
+  }
+  var expectedEmail = String(req.usn).toLowerCase() + "@klsvdit.edu.in";
+  if (String(req.email).toLowerCase().trim() !== expectedEmail) {
+    return { success: false, message: "Email must exactly match your USN: " + expectedEmail };
   }
 
   // ── Validate uniqueness in confirmed Users ───────────────────
@@ -296,7 +263,14 @@ function verifyOtp(req) {
 
   var lastRow  = usersSheet.getLastRow();
   var newRow   = lastRow + 1;
-  var slNo     = lastRow;
+  // Compute slNo as max existing slNo + 1 to handle manual row deletions
+  var allSlNos = usersSheet.getRange(2, 1, Math.max(lastRow - 1, 1), 1).getValues();
+  var maxSlNo  = 0;
+  for (var s = 0; s < allSlNos.length; s++) {
+    var v = Number(allSlNos[s][0]);
+    if (v > maxSlNo) maxSlNo = v;
+  }
+  var slNo = maxSlNo + 1;
 
   var userData = [slNo, firstName, lastName, usn, email, leetcodeUsername, passwordHash, 0, 0];
   for (var q = 0; q < TOTAL_PROBLEMS; q++) {
@@ -384,7 +358,7 @@ function updateProgress(req) {
 
 // ============================================================
 //  ACTION: getLeaderboard
-//  Returns top-20 rows from the Leaderboard tab
+//  Returns ALL rows from the Leaderboard tab (sorted by SORT formula in sheet)
 // ============================================================
 function getLeaderboard() {
   var sheet = getSheet(LB_SHEET);
@@ -392,13 +366,14 @@ function getLeaderboard() {
 
   // Row 0 = headers, rows 1.. = data (already sorted by SORT formula)
   var rows = [];
-  var limit = Math.min(data.length - 1, 20);
+  var rank = 0;
 
-  for (var i = 1; i <= limit; i++) {
+  for (var i = 1; i < data.length; i++) {
     var r = data[i];
     if (!r[0] && !r[2]) continue; // skip empty rows
+    rank++;
     rows.push({
-      rank:             i,
+      rank:             rank,
       firstName:        r[0],
       lastName:         r[1],
       usn:              r[2],
@@ -409,6 +384,29 @@ function getLeaderboard() {
   }
 
   return { success: true, leaderboard: rows };
+}
+
+// ============================================================
+//  ACTION: updateProfile
+//  Payload: usn, password (SHA-256 hex), leetcodeUsername
+// ============================================================
+function updateProfile(req) {
+  var sheet  = getSheet(USERS_SHEET);
+  var rowIdx = findUserRow(sheet, req.usn);
+
+  if (rowIdx === -1) {
+    return { success: false, message: "USN not found." };
+  }
+
+  var row = getUserRow(sheet, rowIdx);
+  if (row[6] !== req.password) {
+    return { success: false, message: "Authentication failed." };
+  }
+
+  // Update LeetCode username (col F = index 6, 1-based col 6)
+  sheet.getRange(rowIdx, 6).setValue(req.leetcodeUsername.trim());
+
+  return { success: true, message: "Profile updated successfully." };
 }
 
 // ============================================================

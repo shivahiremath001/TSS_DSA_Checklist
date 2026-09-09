@@ -4,22 +4,41 @@
 
 /* ─── Design Tokens ────────────────────────────────────────── */
 @theme {
-  --color-black:    #000000;
-  --color-white:    #ffffff;
-  --color-grey-950: #080808;
-  --color-grey-900: #0f0f0f;
-  --color-grey-800: #1a1a1a;
-  --color-grey-700: #2a2a2a;
-  --color-grey-600: #3d3d3d;
-  --color-grey-500: #5a5a5a;
-  --color-grey-400: #8a8a8a;
-  --color-grey-300: #b0b0b0;
-  --color-grey-200: #d0d0d0;
-  --color-grey-100: #f0f0f0;
-
   --font-display: "Barlow Condensed", "Space Grotesk", ui-sans-serif, system-ui;
   --font-sans:    "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-mono:    "JetBrains Mono", ui-monospace, monospace;
+}
+
+:root {
+  --bg: #000000;
+  --bg-card: #0f0f0f;
+  --bg-hover: #080808;
+  --fg: #ffffff;
+  --fg-muted: #8a8a8a;
+  --fg-highlight: #fff;
+  --border: #1a1a1a;
+  --border-focus: #fff;
+  --btn-primary-bg: #fff;
+  --btn-primary-fg: #000;
+  --btn-secondary-bg: transparent;
+  --btn-secondary-fg: #fff;
+  --btn-secondary-border: #2a2a2a;
+}
+
+[data-theme="light"] {
+  --bg: #ffffff;
+  --bg-card: #f9f9f9;
+  --bg-hover: #f0f0f0;
+  --fg: #000000;
+  --fg-muted: #5a5a5a;
+  --fg-highlight: #000;
+  --border: #e0e0e0;
+  --border-focus: #000;
+  --btn-primary-bg: #000;
+  --btn-primary-fg: #fff;
+  --btn-secondary-bg: transparent;
+  --btn-secondary-fg: #000;
+  --btn-secondary-border: #d0d0d0;
 }
 
 /* ─── Base Reset ────────────────────────────────────────────── */
@@ -28,12 +47,13 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background-color: #000;
-  color: #ffffff;
+  background-color: var(--bg);
+  color: var(--fg);
   font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
 /* ─── Grain / Noise Texture Overlay ────────────────────────── */
@@ -46,6 +66,9 @@ body::before {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
   background-size: 200px 200px;
   opacity: 0.035;
+}
+[data-theme="light"] body::before {
+  opacity: 0.015;
 }
 
 #root { position: relative; z-index: 1; }
@@ -83,6 +106,17 @@ button, a, input, select {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 .animate-spin { animation: spin 0.7s linear infinite; }
+
+@keyframes shimmer {
+  from { background-position: -400px 0; }
+  to   { background-position:  400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 2px;
+}
 
 /* ─── Display / Hero Typography ────────────────────────────── */
 .display-heading {

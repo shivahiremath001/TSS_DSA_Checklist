@@ -11,15 +11,15 @@ export default function DashboardPage() {
   const [activeWeek, setActiveWeek] = useState<number>(1);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#000" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <Navbar />
 
       {/* Demo mode banner */}
       {isDemo && (
         <div
           style={{
-            borderBottom: "1px solid #222",
-            background: "#0a0a0a",
+            borderBottom: "1px solid var(--border)",
+            background: "var(--bg-hover)",
             padding: "0.5rem 1.5rem",
             display: "flex",
             alignItems: "center",
@@ -32,8 +32,8 @@ export default function DashboardPage() {
               fontSize: "0.6rem",
               textTransform: "uppercase",
               letterSpacing: "0.12em",
-              background: "#fff",
-              color: "#000",
+              background: "var(--fg)",
+              color: "var(--bg)",
               padding: "0.15rem 0.45rem",
               fontWeight: 700,
             }}
@@ -44,7 +44,7 @@ export default function DashboardPage() {
             style={{
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: "0.62rem",
-              color: "#666",
+              color: "var(--fg-muted)",
               letterSpacing: "0.04em",
             }}
           >
@@ -63,7 +63,7 @@ export default function DashboardPage() {
             style={{
               fontFamily: "JetBrains Mono, monospace",
               fontSize: "0.65rem",
-              color: "#777",
+              color: "var(--fg-muted)",
               textTransform: "uppercase",
               letterSpacing: "0.12em",
               marginBottom: "0.5rem",
@@ -73,7 +73,7 @@ export default function DashboardPage() {
           </p>
           <h1
             className="display-heading"
-            style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", color: "#fff" }}
+            style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", color: "var(--fg)" }}
           >
             {user?.firstName?.toUpperCase()}'S PROGRESS.
           </h1>

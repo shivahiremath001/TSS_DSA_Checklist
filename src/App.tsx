@@ -4,6 +4,9 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
+import ProfilePage from "./pages/ProfilePage";
+import NotFoundPage from "./pages/NotFoundPage";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 /** Redirects to /login if not authenticated */
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -19,8 +22,9 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+    <ErrorBoundary>
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
       {/* Auth routes */}
       <Route
@@ -58,8 +62,18 @@ export default function App() {
         }
       />
 
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Catch-all */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
+    </ErrorBoundary>
   );
 }

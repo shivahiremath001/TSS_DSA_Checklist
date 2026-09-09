@@ -58,16 +58,8 @@ export interface LeaderboardEntry {
 
 // ─── Endpoints ───────────────────────────────────────────────────────────────
 
-export async function apiRegister(payload: {
-  firstName: string;
-  lastName: string;
-  usn: string;
-  email: string;
-  leetcodeUsername: string;
-  password: string; // already SHA-256 hashed
-}): Promise<{ success: boolean; message: string }> {
-  return post({ action: "register", ...payload });
-}
+
+
 
 export async function apiLogin(payload: {
   usn: string;
@@ -105,6 +97,14 @@ export async function apiChangePassword(payload: {
   newPassword: string; // SHA-256 hashed
 }): Promise<{ success: boolean; message: string }> {
   return post({ action: "changePassword", ...payload });
+}
+
+export async function apiUpdateProfile(payload: {
+  usn: string;
+  password: string; // SHA-256 hashed
+  leetcodeUsername: string;
+}): Promise<{ success: boolean; message: string }> {
+  return post({ action: "updateProfile", ...payload });
 }
 
 export async function apiSendOtp(payload: {

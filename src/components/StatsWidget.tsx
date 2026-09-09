@@ -10,13 +10,13 @@ export default function StatsWidget() {
   return (
     <div
       className="w-full"
-      style={{ borderBottom: "1px solid #1a1a1a", paddingBottom: "2rem" }}
+      style={{ borderBottom: "1px solid var(--border)", paddingBottom: "2rem" }}
     >
       {/* Big display number */}
       <div className="flex items-end gap-4 mb-4">
         <span
           className="display-heading"
-          style={{ fontSize: "clamp(4rem, 10vw, 7rem)", color: "#fff" }}
+          style={{ fontSize: "clamp(4rem, 10vw, 7rem)", color: "var(--fg)" }}
         >
           {solved}
         </span>
@@ -25,7 +25,7 @@ export default function StatsWidget() {
             style={{
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: "0.65rem",
-              color: "#888",
+              color: "var(--fg-muted)",
               letterSpacing: "0.08em",
               textTransform: "uppercase",
             }}
@@ -36,7 +36,7 @@ export default function StatsWidget() {
             style={{
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: "0.65rem",
-              color: "#666",
+              color: "var(--fg-muted)",
               letterSpacing: "0.08em",
               textTransform: "uppercase",
               marginTop: "2px",
@@ -50,7 +50,7 @@ export default function StatsWidget() {
       {/* Progress track */}
       <div
         className="w-full overflow-hidden"
-        style={{ height: "2px", background: "#1a1a1a" }}
+        style={{ height: "6px", background: "var(--border)", borderRadius: "3px" }}
         role="progressbar"
         aria-valuenow={solved}
         aria-valuemin={0}
@@ -58,7 +58,7 @@ export default function StatsWidget() {
       >
         <div
           className="h-full progress-bar-fill"
-          style={{ width: `${pct}%`, background: "#fff" }}
+          style={{ width: `${pct}%`, background: "var(--fg-highlight)", borderRadius: "3px" }}
         />
       </div>
 
@@ -74,7 +74,7 @@ export default function StatsWidget() {
               style={{
                 fontFamily: "'JetBrains Mono', monospace",
                 fontSize: "0.62rem",
-                color: "#666",
+                color: "var(--fg-muted)",
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
               }}
@@ -85,7 +85,7 @@ export default function StatsWidget() {
               style={{
                 fontFamily: "'JetBrains Mono', monospace",
                 fontSize: "0.75rem",
-                color: "#999",
+                color: "var(--fg)",
                 marginTop: "2px",
               }}
             >

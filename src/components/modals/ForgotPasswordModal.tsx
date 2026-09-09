@@ -103,7 +103,7 @@ export default function ForgotPasswordModal({ open, onClose }: ForgotPasswordMod
                 value={usn}
                 onChange={(e) => setUsn(e.target.value.toUpperCase())}
                 required
-                placeholder="1BM22CS001"
+                placeholder="2VDXXCSXXX"
                 style={{ ...inputStyle, fontFamily: "JetBrains Mono, monospace", textTransform: "uppercase" }}
               />
             </div>

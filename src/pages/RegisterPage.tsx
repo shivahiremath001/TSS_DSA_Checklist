@@ -15,8 +15,8 @@ const inputStyle: React.CSSProperties = {
 };
 
 const labelStyle: React.CSSProperties = {
-  fontFamily: "JetBrains Mono, monospace", fontSize: "0.6rem",
-  textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "#3d3d3d",
+  fontFamily: "JetBrains Mono, monospace", fontSize: "0.75rem", fontWeight: 700,
+  textTransform: "uppercase" as const, letterSpacing: "0.12em", color: "var(--fg-muted)",
 };
 
 // ─── Step indicator ────────────────────────────────────────────────────────────
@@ -168,25 +168,41 @@ export default function RegisterPage() {
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const [timerActive, setTimerActive] = useState(false);
-  const remaining = useCountdown(300, timerActive); // 5 minutes
+  const [resendLockedUntil, setResendLockedUntil] = useState<number>(0);
+  const [resendSecsLeft, setResendSecsLeft] = useState(0);
+  const remaining = useCountdown(180, timerActive); // 3 min OTP expiry
 
-  // Format mm:ss
+  // Format mm:ss for OTP expiry
   const mins = String(Math.floor(remaining / 60)).padStart(2, "0");
   const secs = String(remaining % 60).padStart(2, "0");
   const expired = remaining === 0;
+
+  // Resend cooldown: 15 min countdown shown on button
+  useEffect(() => {
+    if (resendLockedUntil === 0) return;
+    const id = setInterval(() => {
+      const left = Math.max(0, Math.ceil((resendLockedUntil - Date.now()) / 1000));
+      setResendSecsLeft(left);
+      if (left === 0) clearInterval(id);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [resendLockedUntil]);
 
   const set = (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = field === "usn" ? e.target.value.toUpperCase() : e.target.value;
     setForm((p) => ({ ...p, [field]: val }));
   };
 
-  const usnValid = /^[1-4][A-Z]{2}\d{2}[A-Z]{2}\d{3}$/.test(form.usn);
+  const usnValid = /^2VD\d{2}[A-Z]{2}\d{3}$/.test(form.usn);
+  const emailExpected = `${form.usn.toLowerCase()}@klsvdit.edu.in`;
+  const emailValid = form.email.trim().toLowerCase() === emailExpected;
   const pwdMatch = form.password === form.confirmPassword;
 
   // ── Step 1 submit — send OTP ──────────────────────────────────
   async function handleSendOtp(e: React.FormEvent) {
     e.preventDefault();
-    if (!usnValid) { toast.error("Invalid USN format (e.g. 1BM22CS001)"); return; }
+    if (!usnValid) { toast.error("Invalid USN format. Must start with 2VD (e.g. 2VD23CS065)"); return; }
+    if (!emailValid) { toast.error(`Email must exactly match your USN: ${emailExpected}`); return; }
     if (form.password.length < 6) { toast.error("Password must be at least 6 characters."); return; }
     if (!pwdMatch) { toast.error("Passwords do not match."); return; }
 
@@ -205,8 +221,10 @@ export default function RegisterPage() {
       setOtp("");
       setStep(2);
       setTimerActive(false);
-      // small delay so countdown re-triggers
+      // start both timers
       setTimeout(() => setTimerActive(true), 50);
+      setResendLockedUntil(Date.now() + 15 * 60 * 1000); // 15-min resend lock
+      setResendSecsLeft(15 * 60);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to send OTP.");
     } finally {
@@ -253,6 +271,8 @@ export default function RegisterPage() {
       setOtp("");
       setTimerActive(false);
       setTimeout(() => setTimerActive(true), 50);
+      setResendLockedUntil(Date.now() + 15 * 60 * 1000);
+      setResendSecsLeft(15 * 60);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to resend OTP.");
     } finally {
@@ -343,20 +363,20 @@ export default function RegisterPage() {
               <label htmlFor="reg-usn" style={labelStyle}>USN</label>
               <input
                 id="reg-usn" type="text" value={form.usn} onChange={set("usn")}
-                required placeholder="1BM22CS001"
+                required placeholder="2VDXXCSXXX"
                 style={{ ...inputStyle, fontFamily: "JetBrains Mono, monospace", textTransform: "uppercase",
-                  borderColor: form.usn && !usnValid ? "#5a5a5a" : "#2a2a2a" }}
-                onFocus={(e) => (e.target.style.borderColor = "#fff")}
-                onBlur={(e) => (e.target.style.borderColor = form.usn && !usnValid ? "#5a5a5a" : "#2a2a2a")}
+                  borderColor: form.usn && !usnValid ? "#5a5a5a" : "var(--border)" }}
+                onFocus={(e) => (e.target.style.borderColor = "var(--border-focus)")}
+                onBlur={(e) => (e.target.style.borderColor = form.usn && !usnValid ? "#5a5a5a" : "var(--border)")}
               />
               {form.usn && !usnValid && (
                 <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.6rem", color: "#5a5a5a", marginTop: "0.25rem" }}>
-                  Format: 1BM22CS001
+                  Format: 2VDXXCSXXX
                 </p>
               )}
             </div>
 
-            {inputField("reg-email", "Gmail Address", "email", "email", false, "you@gmail.com")}
+            {inputField("reg-email", "College Email", "email", "email", false, "2vdxxcsxxx@klsvdit.edu.in")}
             {inputField("reg-leetcode", "LeetCode Username", "leetcodeUsername", "text", true, "john_doe")}
 
             {/* Password */}
@@ -384,6 +404,11 @@ export default function RegisterPage() {
                 </p>
               )}
             </div>
+
+            {/* Account deletion warning */}
+            <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.58rem", color: "#3d3d3d", lineHeight: 1.6, marginTop: "-0.25rem" }}>
+              ⚠ Accounts cannot be deleted once created.
+            </p>
 
             <button type="submit" id="register-send-otp" disabled={loading} className="btn-primary" style={{ width: "100%", marginTop: "0.5rem" }}>
               {loading ? "Sending Code…" : "Send Verification Code →"}
@@ -467,24 +492,22 @@ export default function RegisterPage() {
 
               <button
                 onClick={handleResend}
-                disabled={resending || (!expired && remaining > 240)} // allow resend after 1 min
+                disabled={resending || resendSecsLeft > 0}
                 style={{
-                  background: "none", border: "none", cursor: (resending || (!expired && remaining > 240)) ? "not-allowed" : "pointer",
+                  background: "none", border: "none",
+                  cursor: (resending || resendSecsLeft > 0) ? "not-allowed" : "pointer",
                   fontFamily: "JetBrains Mono, monospace", fontSize: "0.62rem",
-                  color: (resending || (!expired && remaining > 240)) ? "#333" : "#666",
+                  color: (resending || resendSecsLeft > 0) ? "#333" : "#666",
                   letterSpacing: "0.04em", padding: 0,
                   textDecoration: "underline",
                   transition: "color 100ms ease",
                 }}
-                onMouseEnter={(e) => {
-                  if (!resending && (expired || remaining <= 240))
-                    (e.target as HTMLElement).style.color = "#fff";
-                }}
-                onMouseLeave={(e) => {
-                  (e.target as HTMLElement).style.color = (resending || (!expired && remaining > 240)) ? "#333" : "#666";
-                }}
               >
-                {resending ? "Sending…" : "Resend Code"}
+                {resending
+                  ? "Sending…"
+                  : resendSecsLeft > 0
+                  ? `Resend in ${Math.floor(resendSecsLeft / 60)}:${String(resendSecsLeft % 60).padStart(2, "0")}`
+                  : "Resend Code"}
               </button>
             </div>
           </div>

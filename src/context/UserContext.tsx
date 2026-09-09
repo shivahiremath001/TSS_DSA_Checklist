@@ -28,6 +28,7 @@ interface UserContextValue extends UserState {
   logout: () => void;
   setSolved: (qIndex: number, solved: boolean) => void;
   setTotalSolved: (total: number) => void;
+  setLeetcodeUsername: (username: string) => void;
 }
 
 // ─── Context ─────────────────────────────────────────────────────────────────
@@ -121,9 +122,16 @@ export function UserContextProvider({
     }));
   }, []);
 
+  const setLeetcodeUsername = useCallback((username: string) => {
+    setState((prev) => ({
+      ...prev,
+      user: prev.user ? { ...prev.user, leetcodeUsername: username } : prev.user,
+    }));
+  }, []);
+
   const value = useMemo<UserContextValue>(
-    () => ({ ...state, login, logout, setSolved, setTotalSolved }),
-    [state, login, logout, setSolved, setTotalSolved]
+    () => ({ ...state, login, logout, setSolved, setTotalSolved, setLeetcodeUsername }),
+    [state, login, logout, setSolved, setTotalSolved, setLeetcodeUsername]
   );
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
