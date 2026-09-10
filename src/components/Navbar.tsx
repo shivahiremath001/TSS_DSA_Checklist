@@ -81,13 +81,15 @@ export default function Navbar() {
               </span>
             )}
 
-            <button
-              id="account-settings-btn"
-              onClick={() => setShowChangePwd(true)}
-              className="btn-secondary text-xs"
-            >
-              Settings
-            </button>
+            {!isAdmin && (
+              <button
+                id="account-settings-btn"
+                onClick={() => setShowChangePwd(true)}
+                className="btn-secondary text-xs"
+              >
+                Settings
+              </button>
+            )}
             <button
               id="logout-btn"
               onClick={logout}

@@ -49,6 +49,7 @@ function doPost(e) {
       case "getAllUsers":    result = getAllUsers(request); break;
       case "getUserProgress": result = getUserProgress(request); break;
       case "removeUser":     result = removeUser(request); break;
+      case "getAllUsersProgress": result = getAllUsersProgress(request); break;
       default:
         result = { success: false, message: "Unknown action: " + action };
     }
@@ -610,4 +611,39 @@ function removeUser(req) {
   
   sheet.deleteRow(rowIdx);
   return { success: true, message: "User " + req.usn + " removed." };
+}
+
+// ============================================================
+//  ACTION: getAllUsersProgress
+//  Returns every user's meta + full solvedArray in one call
+//  Payload: adminPassword
+// ============================================================
+function getAllUsersProgress(req) {
+  if (req.adminPassword !== "The*Software*Society@581329") return { success: false, message: "Unauthorized." };
+
+  var sheet = getSheet(USERS_SHEET);
+  var data = sheet.getDataRange().getValues();
+  var result = [];
+
+  for (var i = 1; i < data.length; i++) {
+    var r = data[i];
+    if (!r[3]) continue; // skip empty USN rows
+    var solvedArray = [];
+    for (var q = 0; q < TOTAL_PROBLEMS; q++) {
+      solvedArray.push(r[Q_START_COL - 1 + q] === 1 ? 1 : 0);
+    }
+    result.push({
+      slNo:             r[0],
+      firstName:        r[1],
+      lastName:         r[2],
+      usn:              r[3],
+      email:            r[4],
+      leetcodeUsername: r[5],
+      totalSolved:      r[7],
+      percentage:       r[8],
+      solvedArray:      solvedArray
+    });
+  }
+
+  return { success: true, users: result };
 }

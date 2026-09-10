@@ -166,3 +166,13 @@ export async function apiRemoveUser(payload: {
 }): Promise<{ success: boolean; message: string }> {
   return post({ action: "removeUser", ...payload });
 }
+
+export interface UserWithProgress extends UserMeta {
+  solvedArray: number[];
+}
+
+export async function apiGetAllUsersProgress(payload: {
+  adminPassword: string;
+}): Promise<{ success: boolean; users: UserWithProgress[] }> {
+  return post({ action: "getAllUsersProgress", ...payload });
+}

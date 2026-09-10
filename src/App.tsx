@@ -9,81 +9,72 @@ import NotFoundPage from "./pages/NotFoundPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import ErrorBoundary from "./components/ErrorBoundary";
 
-/** Redirects to /login if not authenticated */
+// ─── Route Helpers ────────────────────────────────────────────────────────────
+
+/** Sends unauthenticated users to /login. Admin users go to /admin-dashboard. Regular users pass through. */
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useUser();
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+  const { isAuthenticated, user } = useUser();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.usn === "ADMIN") return <Navigate to="/admin-dashboard" replace />;
+  return <>{children}</>;
 }
 
-/** Redirects to /dashboard if already authenticated */
-function GuestRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useUser();
-  return !isAuthenticated ? <>{children}</> : <Navigate to="/dashboard" replace />;
+/** For pages only non-admins should access (dashboard, profile, leaderboard) */
+function UserRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, user } = useUser();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.usn === "ADMIN") return <Navigate to="/admin-dashboard" replace />;
+  return <>{children}</>;
 }
+
+/** Admin-only route. Non-admins get redirected out. */
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, user } = useUser();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.usn !== "ADMIN") return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+}
+
+/** Redirects authenticated users to the right home: admin → /admin-dashboard, user → /dashboard */
+function GuestRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, user } = useUser();
+  if (!isAuthenticated) return <>{children}</>;
+  if (user?.usn === "ADMIN") return <Navigate to="/admin-dashboard" replace />;
+  return <Navigate to="/dashboard" replace />;
+}
+
+/** Smart root redirect based on who's logged in */
+function HomeRedirect() {
+  const { isAuthenticated, user } = useUser();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.usn === "ADMIN") return <Navigate to="/admin-dashboard" replace />;
+  return <Navigate to="/dashboard" replace />;
+}
+
+// ─── App ─────────────────────────────────────────────────────────────────────
 
 export default function App() {
   return (
     <ErrorBoundary>
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        {/* Smart root redirect */}
+        <Route path="/" element={<HomeRedirect />} />
 
-      {/* Auth routes */}
-      <Route
-        path="/login"
-        element={
-          <GuestRoute>
-            <LoginPage />
-          </GuestRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <GuestRoute>
-            <RegisterPage />
-          </GuestRoute>
-        }
-      />
+        {/* Auth routes – only for guests */}
+        <Route path="/login"    element={<GuestRoute><LoginPage /></GuestRoute>} />
+        <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
 
-      {/* Protected routes */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/leaderboard"
-        element={
-          <ProtectedRoute>
-            <LeaderboardPage />
-          </ProtectedRoute>
-        }
-      />
+        {/* Regular user routes */}
+        <Route path="/dashboard"   element={<UserRoute><DashboardPage /></UserRoute>} />
+        <Route path="/leaderboard" element={<UserRoute><LeaderboardPage /></UserRoute>} />
+        <Route path="/profile"     element={<UserRoute><ProfilePage /></UserRoute>} />
 
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        }
-      />
+        {/* Admin-only route */}
+        <Route path="/admin-dashboard" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
 
-      <Route
-        path="/admin-dashboard"
-        element={
-          <ProtectedRoute>
-            <AdminDashboardPage />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Catch-all */}
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        {/* Catch-all */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
     </ErrorBoundary>
   );
 }
