@@ -6,7 +6,6 @@ interface SnakeGameModalProps {
 }
 
 const GRID_SIZE = 20;
-const CELL_SIZE = 15; // in pixels roughly, handled via CSS
 const SPEED = 100; // ms per tick
 
 type Point = { x: number; y: number };

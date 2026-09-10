@@ -11,14 +11,6 @@ import ErrorBoundary from "./components/ErrorBoundary";
 
 // ─── Route Helpers ────────────────────────────────────────────────────────────
 
-/** Sends unauthenticated users to /login. Admin users go to /admin-dashboard. Regular users pass through. */
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, user } = useUser();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (user?.usn === "ADMIN") return <Navigate to="/admin-dashboard" replace />;
-  return <>{children}</>;
-}
-
 /** For pages only non-admins should access (dashboard, profile, leaderboard) */
 function UserRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useUser();
