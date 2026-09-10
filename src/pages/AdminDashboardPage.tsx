@@ -129,7 +129,7 @@ export default function AdminDashboardPage() {
 
         {/* ── Page Header ───────────────────────────────────── */}
         <div style={{ marginBottom: "2rem", borderBottom: "1px solid var(--border)", paddingBottom: "1.5rem" }}>
-          <p style={{ ...mono, fontSize: "0.58rem", ...muted, textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: "0.5rem" }}>
+          <p style={{ ...mono, fontSize: "0.7rem", ...muted, textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: "0.5rem" }}>
             &lt;The Software Society/&gt; · Administration
           </p>
           <h1 className="display-heading" style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", color: "var(--fg)", lineHeight: 1 }}>
@@ -165,7 +165,7 @@ export default function AdminDashboardPage() {
                   marginLeft: "0.5rem",
                   background: "var(--fg)",
                   color: "var(--bg)",
-                  fontSize: "0.5rem",
+                  fontSize: "0.7rem",
                   padding: "1px 5px",
                   borderRadius: "99px",
                   fontWeight: 900,
@@ -192,7 +192,7 @@ export default function AdminDashboardPage() {
           <div className="page-enter">
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem" }}>
               <h2 style={{ fontWeight: 700, fontSize: "1.1rem" }}>Pending Edit Requests</h2>
-              <button onClick={fetchRequests} style={{ ...mono, fontSize: "0.6rem", background: "none", border: "none", color: "var(--fg-muted)", cursor: "pointer", textDecoration: "underline" }}>↺ Refresh</button>
+              <button onClick={fetchRequests} style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "var(--fg-muted)", cursor: "pointer", textDecoration: "underline" }}>↺ Refresh</button>
             </div>
             {requests.length === 0 ? (
               <div style={{ border: "1px solid var(--border)", padding: "3rem", textAlign: "center", ...muted, ...mono, fontSize: "0.7rem" }}>
@@ -205,17 +205,17 @@ export default function AdminDashboardPage() {
                     <div>
                       <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginBottom: "0.75rem" }}>
                         <span style={{ ...mono, fontSize: "0.75rem", color: "var(--fg)", fontWeight: 700 }}>{req.usn}</span>
-                        <span style={{ ...mono, fontSize: "0.55rem", ...muted }}>
+                        <span style={{ ...mono, fontSize: "0.7rem", ...muted }}>
                           {new Date(req.timestamp).toLocaleString("en-IN")}
                         </span>
                       </div>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
                         <div>
-                          <p style={{ ...mono, fontSize: "0.52rem", textTransform: "uppercase", letterSpacing: "0.1em", ...muted, marginBottom: "0.25rem" }}>Wants to change</p>
+                          <p style={{ ...mono, fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.1em", ...muted, marginBottom: "0.25rem" }}>Wants to change</p>
                           <p style={{ fontSize: "0.875rem", color: "var(--fg)" }}>{req.fieldsToChange}</p>
                         </div>
                         <div>
-                          <p style={{ ...mono, fontSize: "0.52rem", textTransform: "uppercase", letterSpacing: "0.1em", ...muted, marginBottom: "0.25rem" }}>Reason</p>
+                          <p style={{ ...mono, fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.1em", ...muted, marginBottom: "0.25rem" }}>Reason</p>
                           <p style={{ fontSize: "0.875rem", color: "#ccc", fontStyle: "italic" }}>"{req.reason}"</p>
                         </div>
                       </div>
@@ -236,14 +236,14 @@ export default function AdminDashboardPage() {
               <h2 style={{ fontWeight: 700, fontSize: "1.1rem" }}>
                 All Users <span style={{ ...mono, fontSize: "0.7rem", ...muted, fontWeight: 400 }}>({users.length} total)</span>
               </h2>
-              <button onClick={fetchUsers} style={{ ...mono, fontSize: "0.6rem", background: "none", border: "none", color: "var(--fg-muted)", cursor: "pointer", textDecoration: "underline" }}>↺ Refresh</button>
+              <button onClick={fetchUsers} style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "var(--fg-muted)", cursor: "pointer", textDecoration: "underline" }}>↺ Refresh</button>
             </div>
             <div style={{ overflowX: "auto", border: "1px solid var(--border)" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.825rem" }}>
                 <thead>
                   <tr style={{ background: "var(--bg-card)" }}>
                     {["#", "USN", "Name", "Email", "LeetCode", "Solved", "Actions"].map(h => (
-                      <th key={h} style={{ ...cellPad, ...mono, fontSize: "0.55rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", ...muted, textAlign: "left", borderBottom: "1px solid var(--border)", whiteSpace: "nowrap" }}>
+                      <th key={h} style={{ ...cellPad, ...mono, fontSize: "0.7rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", ...muted, textAlign: "left", borderBottom: "1px solid var(--border)", whiteSpace: "nowrap" }}>
                         {h}
                       </th>
                     ))}
@@ -255,14 +255,14 @@ export default function AdminDashboardPage() {
                       onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-hover)")}
                       onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                     >
-                      <td style={{ ...cellPad, ...mono, fontSize: "0.65rem", ...muted }}>{i + 1}</td>
+                      <td style={{ ...cellPad, ...mono, fontSize: "0.75rem", ...muted }}>{i + 1}</td>
                       <td style={{ ...cellPad, ...mono, fontSize: "0.75rem", fontWeight: 700, color: "var(--fg)" }}>{u.usn}</td>
                       <td style={{ ...cellPad }}>{u.firstName} {u.lastName}</td>
                       <td style={{ ...cellPad, ...mono, fontSize: "0.7rem", ...muted }}>{u.email}</td>
                       <td style={{ ...cellPad, ...mono, fontSize: "0.7rem" }}>{u.leetcodeUsername || "—"}</td>
                       <td style={{ ...cellPad }}>
                         <span style={{ ...mono, fontSize: "0.75rem", fontWeight: 700 }}>{u.totalSolved}</span>
-                        <span style={{ ...muted, ...mono, fontSize: "0.6rem" }}>/150</span>
+                        <span style={{ ...muted, ...mono, fontSize: "0.75rem" }}>/150</span>
                         <div style={{ marginTop: "4px", height: "2px", background: "var(--border)", width: "60px" }}>
                           <div style={{ height: "100%", background: "var(--fg)", width: `${u.percentage}%`, transition: "width 0.5s ease" }} />
                         </div>
@@ -271,13 +271,13 @@ export default function AdminDashboardPage() {
                         <div style={{ display: "flex", gap: "0.75rem" }}>
                           <button
                             onClick={() => handleViewProgress(u)}
-                            style={{ ...mono, fontSize: "0.6rem", background: "none", border: "none", color: "var(--fg)", cursor: "pointer", textDecoration: "underline", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                            style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "var(--fg)", cursor: "pointer", textDecoration: "underline", textTransform: "uppercase", letterSpacing: "0.05em" }}
                           >
                             View
                           </button>
                           <button
                             onClick={() => handleRemoveUser(u.usn)}
-                            style={{ ...mono, fontSize: "0.6rem", background: "none", border: "none", color: "#e05555", cursor: "pointer", textDecoration: "underline", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                            style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "#e05555", cursor: "pointer", textDecoration: "underline", textTransform: "uppercase", letterSpacing: "0.05em" }}
                           >
                             Remove
                           </button>
@@ -296,25 +296,25 @@ export default function AdminDashboardPage() {
           <div className="page-enter">
             <button
               onClick={() => setSelectedUser(null)}
-              style={{ ...mono, fontSize: "0.62rem", ...muted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", marginBottom: "1.5rem", textTransform: "uppercase", letterSpacing: "0.08em" }}
+              style={{ ...mono, fontSize: "0.75rem", ...muted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", marginBottom: "1.5rem", textTransform: "uppercase", letterSpacing: "0.08em" }}
             >
               ← Back to Users
             </button>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "1.5rem", alignItems: "start", marginBottom: "2rem" }}>
               <div>
-                <p style={{ ...mono, fontSize: "0.58rem", ...muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.35rem" }}>Viewing Progress</p>
+                <p style={{ ...mono, fontSize: "0.7rem", ...muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.35rem" }}>Viewing Progress</p>
                 <h2 style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1.1 }}>
                   {selectedUser.firstName} {selectedUser.lastName}
                 </h2>
-                <p style={{ ...mono, fontSize: "0.65rem", ...muted, marginTop: "0.35rem" }}>{selectedUser.usn}</p>
+                <p style={{ ...mono, fontSize: "0.75rem", ...muted, marginTop: "0.35rem" }}>{selectedUser.usn}</p>
               </div>
               <div style={{ textAlign: "right" }}>
                 <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "3rem", lineHeight: 1 }}>
                   {selectedUser.totalSolved}
                 </span>
-                <span style={{ ...mono, fontSize: "0.65rem", ...muted }}>/150</span>
-                <p style={{ ...mono, fontSize: "0.65rem", color: "var(--fg)", marginTop: "0.25rem" }}>{selectedUser.percentage}% complete</p>
+                <span style={{ ...mono, fontSize: "0.75rem", ...muted }}>/150</span>
+                <p style={{ ...mono, fontSize: "0.75rem", color: "var(--fg)", marginTop: "0.25rem" }}>{selectedUser.percentage}% complete</p>
               </div>
             </div>
 
@@ -355,7 +355,7 @@ export default function AdminDashboardPage() {
                     </div>
                   ))}
                 </div>
-                <p style={{ marginTop: "1rem", ...mono, fontSize: "0.55rem", ...muted }}>
+                <p style={{ marginTop: "1rem", ...mono, fontSize: "0.7rem", ...muted }}>
                   Each cell = one of the 150 problems. White = solved.
                 </p>
               </>
@@ -372,14 +372,14 @@ export default function AdminDashboardPage() {
               <h2 style={{ fontWeight: 700, fontSize: "1.1rem" }}>
                 Challenge 150 Leaderboard
               </h2>
-              <button onClick={fetchLeaderboard} style={{ ...mono, fontSize: "0.6rem", background: "none", border: "none", ...muted, cursor: "pointer", textDecoration: "underline" }}>↺ Refresh</button>
+              <button onClick={fetchLeaderboard} style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", ...muted, cursor: "pointer", textDecoration: "underline" }}>↺ Refresh</button>
             </div>
             <div style={{ overflowX: "auto", border: "1px solid var(--border)" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.825rem" }}>
                 <thead>
                   <tr style={{ background: "var(--bg-card)" }}>
                     {["Rank", "Name", "USN", "LeetCode", "Solved", "%"].map(h => (
-                      <th key={h} style={{ ...cellPad, ...mono, fontSize: "0.55rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", ...muted, textAlign: "left", borderBottom: "1px solid var(--border)", whiteSpace: "nowrap" }}>
+                      <th key={h} style={{ ...cellPad, ...mono, fontSize: "0.7rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", ...muted, textAlign: "left", borderBottom: "1px solid var(--border)", whiteSpace: "nowrap" }}>
                         {h}
                       </th>
                     ))}
@@ -406,7 +406,7 @@ export default function AdminDashboardPage() {
                       <td style={{ ...cellPad, ...mono, fontSize: "0.7rem" }}>{entry.leetcodeUsername || "—"}</td>
                       <td style={{ ...cellPad }}>
                         <span style={{ ...mono, fontWeight: 700 }}>{entry.totalSolved}</span>
-                        <span style={{ ...muted, ...mono, fontSize: "0.6rem" }}>/150</span>
+                        <span style={{ ...muted, ...mono, fontSize: "0.75rem" }}>/150</span>
                       </td>
                       <td style={{ ...cellPad, ...mono, fontSize: "0.75rem", fontWeight: 700 }}>{entry.percentage}%</td>
                     </tr>
@@ -425,16 +425,16 @@ export default function AdminDashboardPage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
               <div>
                 <h2 style={{ fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.25rem" }}>Full Data Sheet</h2>
-                <p style={{ ...mono, fontSize: "0.6rem", ...muted }}>
+                <p style={{ ...mono, fontSize: "0.75rem", ...muted }}>
                   Each column = Q1–Q150 · White cell = solved · {sheetUsers.length} users loaded
                 </p>
               </div>
-              <button onClick={fetchSheetView} style={{ ...mono, fontSize: "0.6rem", background: "none", border: "none", ...muted, cursor: "pointer", textDecoration: "underline" }}>↺ Refresh</button>
+              <button onClick={fetchSheetView} style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", ...muted, cursor: "pointer", textDecoration: "underline" }}>↺ Refresh</button>
             </div>
 
             {/* Sticky horizontal scroll container */}
             <div style={{ overflowX: "auto", border: "1px solid var(--border)", maxHeight: "70vh", overflowY: "auto" }}>
-              <table style={{ borderCollapse: "collapse", fontSize: "0.65rem" }}>
+              <table style={{ borderCollapse: "collapse", fontSize: "0.75rem" }}>
                 <thead style={{ position: "sticky", top: 0, zIndex: 10, background: "#0a0a0a" }}>
                   <tr>
                     {/* Fixed info columns */}
@@ -467,7 +467,7 @@ export default function AdminDashboardPage() {
                     >
                       {/* Sticky USN column */}
                       <td style={{
-                        ...cellPad, ...mono, fontSize: "0.65rem", fontWeight: 700,
+                        ...cellPad, ...mono, fontSize: "0.75rem", fontWeight: 700,
                         color: "var(--fg)", borderRight: "2px solid var(--border)",
                         position: "sticky", left: 0, background: "var(--bg)", whiteSpace: "nowrap",
                         zIndex: 5,
@@ -506,11 +506,11 @@ export default function AdminDashboardPage() {
             <div style={{ display: "flex", gap: "1.5rem", marginTop: "1rem", alignItems: "center" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <div style={{ width: 14, height: 14, background: "#fff", border: "1px solid #555" }} />
-                <span style={{ ...mono, fontSize: "0.6rem", ...muted }}>Solved</span>
+                <span style={{ ...mono, fontSize: "0.75rem", ...muted }}>Solved</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <div style={{ width: 14, height: 14, background: "transparent", border: "1px solid #222" }} />
-                <span style={{ ...mono, fontSize: "0.6rem", ...muted }}>Not solved</span>
+                <span style={{ ...mono, fontSize: "0.75rem", ...muted }}>Not solved</span>
               </div>
             </div>
           </div>

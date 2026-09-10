@@ -1,179 +1,321 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap");
 
 @import "tailwindcss";
 
-/* ─── Design Tokens ────────────────────────────────────────── */
+/* ─── Design Tokens ─────────────────────────────────────────── */
 @theme {
-  --font-display: "Barlow Condensed", "Space Grotesk", ui-sans-serif, system-ui;
-  --font-sans:    "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-mono:    "JetBrains Mono", ui-monospace, monospace;
+  --font-display: "Orbitron", ui-sans-serif;
+  --font-sans:    "Rajdhani", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    "Share Tech Mono", ui-monospace, monospace;
 }
 
+/* ─── Game Color System ─────────────────────────────────────── */
 :root {
-  --bg: #000000;
-  --bg-card: #0f0f0f;
-  --bg-hover: #080808;
-  --fg: #ffffff;
-  --fg-muted: #8a8a8a;
-  --fg-highlight: #fff;
-  --border: #1a1a1a;
-  --border-focus: #fff;
-  --btn-primary-bg: #fff;
-  --btn-primary-fg: #000;
+  --bg:           #020b18;
+  --bg-card:      #060f1f;
+  --bg-hover:     #0a1628;
+  --fg:           #e0f2ff;
+  --fg-muted:     #3d6a8a;
+  --fg-highlight: #00d4ff;
+  --border:       #0d2035;
+  --border-glow:  #00d4ff33;
+  --border-focus: #00d4ff;
+
+  --accent:       #00d4ff;   /* electric cyan */
+  --accent-dim:   #0096b3;
+  --accent-glow:  rgba(0, 212, 255, 0.18);
+
+  --purple:       #7c3aed;
+  --purple-glow:  rgba(124, 58, 237, 0.25);
+
+  --green:        #00ff88;
+  --green-dim:    #00cc6e;
+  --green-glow:   rgba(0, 255, 136, 0.2);
+
+  --gold:         #ffd700;
+  --gold-glow:    rgba(255, 215, 0, 0.2);
+
+  --danger:       #ff3d5a;
+  --danger-glow:  rgba(255, 61, 90, 0.2);
+
+  --btn-primary-bg: #00d4ff;
+  --btn-primary-fg: #000d1a;
   --btn-secondary-bg: transparent;
-  --btn-secondary-fg: #fff;
-  --btn-secondary-border: #2a2a2a;
+  --btn-secondary-fg: #00d4ff;
+  --btn-secondary-border: #0d2035;
 }
 
-
-/* ─── Base Reset ────────────────────────────────────────────── */
+/* ─── Base Reset ─────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 html { scroll-behavior: smooth; }
-
 body {
   background-color: var(--bg);
   color: var(--fg);
-  font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  font-family: "Rajdhani", ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
-  transition: background-color 200ms ease, color 200ms ease;
 }
 
-/* ─── Grain / Noise Texture Overlay ────────────────────────── */
+/* ─── Animated Background Grid ──────────────────────────────── */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
-  background-size: 200px 200px;
-  opacity: 0.035;
+  background-image:
+    linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
+/* ─── Scan Lines overlay ────────────────────────────────────── */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 10, 0.08) 2px,
+    rgba(0, 0, 10, 0.08) 4px
+  );
+}
 
 #root { position: relative; z-index: 1; }
 
 /* ─── Scrollbar ─────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: #000; }
-::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: #3d3d3d; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #0d2035; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
 
 /* ─── Focus ─────────────────────────────────────────────────── */
-:focus-visible { outline: 1px solid #fff; outline-offset: 2px; border-radius: 2px; }
+:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
 
 /* ─── Links ─────────────────────────────────────────────────── */
 a { color: inherit; text-decoration: none; }
 
 /* ─── Transitions ───────────────────────────────────────────── */
-button, a, input, select {
+button, a, input, select, textarea {
   transition-property: color, background-color, border-color, box-shadow, opacity, transform;
-  transition-duration: 120ms;
+  transition-duration: 150ms;
   transition-timing-function: ease;
 }
 
 /* ─── Animations ────────────────────────────────────────────── */
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.page-enter { animation: fade-up 0.35s ease-out forwards; }
+.page-enter { animation: fade-up 0.4s ease-out forwards; }
 
-@keyframes progress-fill {
-  from { width: 0% }
-}
-.progress-bar-fill { animation: progress-fill 1s ease-out forwards; }
+@keyframes progress-fill { from { width: 0% } }
+.progress-bar-fill { animation: progress-fill 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 .animate-spin { animation: spin 0.7s linear infinite; }
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 6px var(--accent-glow); }
+  50%       { box-shadow: 0 0 18px var(--accent-glow), 0 0 36px var(--accent-glow); }
+}
+
+@keyframes text-flicker {
+  0%, 100% { opacity: 1; }
+  92%       { opacity: 1; }
+  93%       { opacity: 0.8; }
+  94%       { opacity: 1; }
+  96%       { opacity: 0.9; }
+  98%       { opacity: 1; }
+}
 
 @keyframes shimmer {
   from { background-position: -400px 0; }
   to   { background-position:  400px 0; }
 }
 .skeleton {
-  background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%);
+  background: linear-gradient(90deg, #0a1628 25%, #0d2035 50%, #0a1628 75%);
   background-size: 800px 100%;
   animation: shimmer 1.4s infinite linear;
   border-radius: 2px;
 }
 
-/* ─── Display / Hero Typography ────────────────────────────── */
+@keyframes border-flow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ─── Typography ────────────────────────────────────────────── */
 .display-heading {
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: "Orbitron", sans-serif;
   font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: -0.01em;
-  line-height: 0.92;
+  letter-spacing: 0.04em;
+  line-height: 0.95;
+  /* Neon text shadow */
+  text-shadow: 0 0 20px rgba(0, 212, 255, 0.4), 0 0 60px rgba(0, 212, 255, 0.1);
 }
 
-/* ─── Mono Brand Tag ────────────────────────────────────────── */
 .brand-tag {
-  font-family: "JetBrains Mono", monospace;
+  font-family: "Share Tech Mono", monospace;
   font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: #fff;
-  line-height: 1.2;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  text-shadow: 0 0 8px var(--accent);
+  line-height: 1.4;
 }
 
-/* ─── Card ──────────────────────────────────────────────────── */
+/* ─── Game Card ─────────────────────────────────────────────── */
 .card {
-  background: #0f0f0f;
-  border: 1px solid #1a1a1a;
-  border-radius: 0px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  position: relative;
 }
 
-/* ─── Input ─────────────────────────────────────────────────── */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+  border: 1px solid transparent;
+  background: linear-gradient(135deg, var(--accent-glow), transparent 60%) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ─── HUD Panel (angular corners) ──────────────────────────── */
+.hud-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  position: relative;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+
+/* ─── Inputs ─────────────────────────────────────────────────── */
 .input-field {
   width: 100%;
-  background: #000;
-  border: 1px solid #2a2a2a;
-  color: #fff;
-  padding: 0.625rem 0.875rem;
-  font-size: 0.875rem;
-  font-family: "Space Grotesk", sans-serif;
+  background: rgba(0, 15, 30, 0.8);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  font-family: "Rajdhani", sans-serif;
+  font-weight: 500;
   outline: none;
-  transition: border-color 120ms ease;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
-.input-field::placeholder { color: #3d3d3d; }
-.input-field:focus { border-color: #fff; }
-.input-field.mono { font-family: "JetBrains Mono", monospace; text-transform: uppercase; }
+.input-field::placeholder { color: #1d3a52; }
+.input-field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 12px var(--accent-glow);
+}
+.input-field.mono { font-family: "Share Tech Mono", monospace; text-transform: uppercase; }
 
 /* ─── Buttons ───────────────────────────────────────────────── */
 .btn-primary {
-  background: #fff;
-  color: #000;
+  background: var(--accent);
+  color: #000d1a;
   font-weight: 700;
   font-size: 0.8rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  padding: 0.75rem 1.75rem;
-  border: 1px solid #fff;
+  padding: 0.75rem 2rem;
+  border: 1px solid var(--accent);
   cursor: pointer;
-  transition: background 120ms ease, color 120ms ease;
+  font-family: "Orbitron", sans-serif;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  transition: background 150ms ease, box-shadow 150ms ease, transform 100ms;
+  position: relative;
 }
-.btn-primary:hover { background: transparent; color: #fff; }
-.btn-primary:active { transform: scale(0.98); }
-.btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary:hover {
+  background: transparent;
+  color: var(--accent);
+  box-shadow: 0 0 16px var(--accent-glow), inset 0 0 16px var(--accent-glow);
+}
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary:disabled { opacity: 0.3; cursor: not-allowed; }
 
 .btn-secondary {
   background: transparent;
-  color: #fff;
+  color: var(--fg-muted);
   font-weight: 600;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 0.625rem 1.25rem;
-  border: 1px solid #2a2a2a;
+  padding: 0.6rem 1.2rem;
+  border: 1px solid var(--border);
   cursor: pointer;
+  font-family: "Share Tech Mono", monospace;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  transition: border-color 150ms, color 150ms, box-shadow 150ms;
 }
-.btn-secondary:hover { border-color: #5a5a5a; color: #fff; }
+.btn-secondary:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
 
-/* ─── Badge ─────────────────────────────────────────────────── */
-.badge-easy   { color: #fff;   background: #1a1a1a; border: 1px solid #2a2a2a; }
-.badge-medium { color: #d0d0d0; background: #0f0f0f; border: 1px solid #2a2a2a; }
-.badge-hard   { color: #8a8a8a; background: #000;    border: 1px solid #1a1a1a; }
+/* ─── XP / Progress Bar ─────────────────────────────────────── */
+.xp-bar-track {
+  height: 6px;
+  background: var(--border);
+  position: relative;
+  overflow: visible;
+}
+.xp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-dim), var(--accent), #66e8ff);
+  box-shadow: 0 0 8px var(--accent), 0 0 20px var(--accent-glow);
+  position: relative;
+}
+.xp-bar-fill::after {
+  content: "";
+  position: absolute;
+  right: -2px;
+  top: -3px;
+  width: 4px;
+  height: 12px;
+  background: #fff;
+  box-shadow: 0 0 6px var(--accent);
+}
+
+/* ─── Rank Badges ───────────────────────────────────────────── */
+.badge-easy   { color: var(--green);  background: var(--green-glow);  border: 1px solid var(--green-dim); }
+.badge-medium { color: var(--gold);   background: var(--gold-glow);   border: 1px solid #b8970070; }
+.badge-hard   { color: var(--danger); background: var(--danger-glow); border: 1px solid #ff3d5a70; }
+
+/* ─── Utility: Glowing border ───────────────────────────────── */
+.glow-border {
+  border: 1px solid var(--border-glow);
+  box-shadow: 0 0 0 1px var(--border-glow), inset 0 0 20px rgba(0, 212, 255, 0.02);
+}
+
+/* ─── Stat Number (large game HUD counter) ──────────────────── */
+.stat-number {
+  font-family: "Orbitron", monospace;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-highlight);
+  text-shadow: 0 0 20px var(--accent), 0 0 50px var(--accent-glow);
+  animation: text-flicker 8s ease-in-out infinite;
+}
+
+/* ─── Nav active underline replaced with glow ───────────────── */
+.nav-link-active {
+  color: var(--accent) !important;
+  text-shadow: 0 0 8px var(--accent);
+}

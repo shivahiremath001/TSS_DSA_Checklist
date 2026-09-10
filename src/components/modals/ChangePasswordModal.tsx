@@ -33,7 +33,7 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
       const newHash = await sha256(newPwd);
       if (oldHash !== passwordHash) { toast.error("Current password is incorrect."); return; }
       await apiChangePassword({ usn: user.usn, oldPassword: oldHash, newPassword: newHash });
-      toast.success("Password updated.");
+      toast.success("ACCESS KEY UPDATED.");
       handleClose();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to change password.");
@@ -44,26 +44,6 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
 
   if (!open) return null;
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    background: "#000",
-    border: "1px solid #2a2a2a",
-    color: "#fff",
-    padding: "0.625rem 0.875rem",
-    fontSize: "0.875rem",
-    fontFamily: "Space Grotesk, sans-serif",
-    outline: "none",
-    marginTop: "0.375rem",
-  };
-
-  const labelStyle: React.CSSProperties = {
-    fontFamily: "JetBrains Mono, monospace",
-    fontSize: "0.6rem",
-    textTransform: "uppercase",
-    letterSpacing: "0.1em",
-    color: "#3d3d3d",
-  };
-
   return (
     <div
       style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}
@@ -71,7 +51,7 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
     >
       {/* Backdrop */}
       <div
-        style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.85)" }}
+        style={{ position: "absolute", inset: 0, background: "rgba(2, 11, 24, 0.85)", backdropFilter: "blur(4px)" }}
         onClick={handleClose}
       />
 
@@ -82,49 +62,62 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
           position: "relative",
           width: "100%",
           maxWidth: "420px",
-          background: "#000",
-          border: "1px solid #1a1a1a",
+          background: "var(--bg-card)",
+          border: "1px solid var(--accent)",
           padding: "2rem",
+          boxShadow: "0 0 20px var(--accent-glow)",
+          clipPath: "polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))",
         }}
       >
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.75rem" }}>
           <div>
-            <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.6rem", color: "#3d3d3d", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              Account
+            <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              &gt;_ ACCOUNT SECURITY
             </p>
-            <h2 id="change-pwd-title" style={{ fontSize: "1.25rem", fontWeight: 700, color: "#fff", marginTop: "0.25rem" }}>
-              Change Password
+            <h2 id="change-pwd-title" style={{ fontFamily: "'Orbitron', sans-serif", fontSize: "1.25rem", fontWeight: 700, color: "var(--fg)", marginTop: "0.25rem", textShadow: "0 0 8px var(--accent-glow)" }}>
+              RECONFIGURE KEY
             </h2>
           </div>
-          <button onClick={handleClose} style={{ color: "#3d3d3d", cursor: "pointer", background: "none", border: "none", fontSize: "1.25rem", lineHeight: 1 }} aria-label="Close">
+          <button 
+            onClick={handleClose} 
+            style={{ 
+              color: "var(--fg-muted)", cursor: "pointer", background: "none", border: "none", 
+              fontSize: "2.5rem", lineHeight: 0.8, fontFamily: "'Share Tech Mono', monospace",
+              transition: "color 150ms, text-shadow 150ms"
+            }} 
+            aria-label="Close"
+            onMouseEnter={(e) => { e.currentTarget.style.color = "var(--danger)"; e.currentTarget.style.textShadow = "0 0 8px var(--danger)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--fg-muted)"; e.currentTarget.style.textShadow = "none"; }}
+          >
             ×
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
           <div>
-            <label style={labelStyle}>Current Password</label>
-            <input id="change-pwd-old" type="password" value={oldPwd} onChange={(e) => setOldPwd(e.target.value)} required placeholder="Current password" style={inputStyle} />
+            <label style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--fg-muted)", display: "block", marginBottom: "0.5rem" }}>◈ Current Key</label>
+            <input id="change-pwd-old" type="password" value={oldPwd} onChange={(e) => setOldPwd(e.target.value)} required placeholder="Current access key" className="input-field" />
           </div>
           <div>
-            <label style={labelStyle}>New Password</label>
-            <input id="change-pwd-new" type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} required placeholder="Min 6 characters" style={inputStyle} />
+            <label style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--fg-muted)", display: "block", marginBottom: "0.5rem" }}>◈ New Key</label>
+            <input id="change-pwd-new" type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} required placeholder="Min 6 characters" className="input-field" />
           </div>
           <div>
-            <label style={labelStyle}>Confirm Password</label>
+            <label style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--fg-muted)", display: "block", marginBottom: "0.5rem" }}>◈ Verify Key</label>
             <input
               id="change-pwd-confirm"
               type="password"
               value={confirmPwd}
               onChange={(e) => setConfirmPwd(e.target.value)}
               required
-              placeholder="Repeat new password"
-              style={{ ...inputStyle, borderColor: confirmPwd && confirmPwd !== newPwd ? "#5a5a5a" : "#2a2a2a" }}
+              placeholder="Repeat new access key"
+              className="input-field"
+              style={{ borderColor: confirmPwd && confirmPwd !== newPwd ? "var(--danger)" : undefined }}
             />
             {confirmPwd && confirmPwd !== newPwd && (
-              <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.6rem", color: "#5a5a5a", marginTop: "0.35rem" }}>
-                Passwords do not match
+              <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", color: "var(--danger)", marginTop: "0.35rem" }}>
+                KEYS DO NOT MATCH
               </p>
             )}
           </div>
@@ -136,7 +129,7 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
             className="btn-primary"
             style={{ marginTop: "0.5rem", width: "100%" }}
           >
-            {loading ? "Updating…" : "Update Password"}
+            {loading ? "TRANSMITTING..." : "OVERRIDE KEY →"}
           </button>
         </form>
       </div>

@@ -5,8 +5,8 @@ import LeaderboardTable from "../components/LeaderboardTable";
 import { apiGetLeaderboard, type LeaderboardEntry } from "../lib/api";
 
 export default function LeaderboardPage() {
-  const [entries, setEntries]       = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading]       = useState(true);
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
 
   async function fetchLeaderboard() {
@@ -25,60 +25,23 @@ export default function LeaderboardPage() {
   useEffect(() => { fetchLeaderboard(); }, []);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#000" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <Navbar />
 
-      <main
-        className="page-enter"
-        style={{ maxWidth: "1000px", margin: "0 auto", padding: "3rem 1.5rem 5rem" }}
-      >
+      <main className="page-enter" style={{ maxWidth: "1000px", margin: "0 auto", padding: "2.5rem 1.5rem 5rem" }}>
+
         {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            marginBottom: "2.5rem",
-            borderBottom: "1px solid #1a1a1a",
-            paddingBottom: "1.5rem",
-          }}
-        >
+        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-10 border-b border-[var(--border)] pb-6 gap-4 sm:gap-0">
           <div>
-            <p
-              style={{
-                fontFamily: "JetBrains Mono, monospace",
-                fontSize: "0.6rem",
-                color: "#3d3d3d",
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                marginBottom: "0.5rem",
-              }}
-            >
-              Rankings
+            <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.7rem", color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "0.5rem" }}>
+              &gt;_ GLOBAL RANKINGS
             </p>
-            <h1
-              className="display-heading"
-              style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)", color: "#fff" }}
-            >
+            <h1 className="display-heading" style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)", color: "var(--fg)" }}>
               LEADERBOARD.
             </h1>
             {lastRefreshed && (
-              <p
-                style={{
-                  fontFamily: "JetBrains Mono, monospace",
-                  fontSize: "0.6rem",
-                  color: "#2a2a2a",
-                  marginTop: "0.5rem",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                }}
-              >
-                Updated{" "}
-                {lastRefreshed.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                })}
+              <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.7rem", color: "var(--fg-muted)", marginTop: "0.5rem", letterSpacing: "0.08em" }}>
+                SYNCED {lastRefreshed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
               </p>
             )}
           </div>
@@ -91,23 +54,12 @@ export default function LeaderboardPage() {
             style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
           >
             <svg
-              style={{
-                width: "12px",
-                height: "12px",
-                animation: loading ? "spin 0.7s linear infinite" : "none",
-              }}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
+              style={{ width: "12px", height: "12px", animation: loading ? "spin 0.7s linear infinite" : "none" }}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            Refresh
+            SYNC
           </button>
         </div>
 

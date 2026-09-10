@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { apiSendOtp, apiVerifyOtp } from "../lib/api";
 import { sha256 } from "../lib/crypto";
+import SnakeGameModal from "../components/modals/SnakeGameModal";
 
 // ─── Shared styles ────────────────────────────────────────────────────────────
 
@@ -43,12 +44,12 @@ function StepIndicator({ step }: { step: 1 | 2 }) {
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               ) : (
-                <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.6rem", color: active ? "#fff" : "#333" }}>
+                <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.75rem", color: active ? "#fff" : "#333" }}>
                   {s}
                 </span>
               )}
             </div>
-            <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.6rem", color: active ? "#fff" : done ? "#4ade80" : "#333", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.75rem", color: active ? "#fff" : done ? "#4ade80" : "#333", textTransform: "uppercase", letterSpacing: "0.08em" }}>
               {s === 1 ? "Your Details" : "Verify Email"}
             </span>
             {s === 1 && (
@@ -161,6 +162,7 @@ export default function RegisterPage() {
     leetcodeUsername: "", password: "", confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
+  const [showSnakeGame, setShowSnakeGame] = useState(false);
 
   // Step 2 state
   const [step, setStep]         = useState<1 | 2>(1);
@@ -301,230 +303,238 @@ export default function RegisterPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div
-      className="page-enter"
-      style={{ minHeight: "100vh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center", padding: "3rem 1.5rem" }}
-    >
-      <div style={{ width: "100%", maxWidth: "480px" }}>
+    <>
+      <div
+        className="page-enter"
+        style={{ minHeight: "100vh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center", padding: "3rem 1.5rem" }}
+      >
+        <div style={{ width: "100%", maxWidth: "480px" }}>
 
-        {/* Header */}
-        <div style={{ marginBottom: "2.5rem" }}>
-          <div className="brand-tag" style={{ marginBottom: "1.25rem" }}>
-            &lt;The Software Society/&gt;
-          </div>
-          <h1
-            className="display-heading"
-            style={{ fontSize: "clamp(2.5rem, 6vw, 4rem)", color: "#fff", lineHeight: "1" }}
-          >
-            JOIN<br />CHALLENGE 150.
-          </h1>
-          <p
-            style={{
-              fontFamily: "'JetBrains Mono', monospace", fontSize: "0.65rem",
-              color: "#777", marginTop: "0.75rem", textTransform: "uppercase",
-              letterSpacing: "0.1em",
-            }}
-          >
-            Create your account to get started
-          </p>
-        </div>
-
-        {/* Divider */}
-        <div style={{ height: "1px", background: "#1a1a1a", marginBottom: "2rem" }} />
-
-        {/* Step indicator */}
-        <StepIndicator step={step} />
-
-        {/* ════════════════════════════════════════════════
-            STEP 1 — Registration Form
-            ════════════════════════════════════════════════ */}
-        {step === 1 && (
-          <form onSubmit={handleSendOtp} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            {/* Name row */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-              <div>
-                <label htmlFor="reg-firstname" style={labelStyle}>First Name</label>
-                <input id="reg-firstname" type="text" value={form.firstName} onChange={set("firstName")}
-                  required placeholder="John" style={inputStyle}
-                  onFocus={(e) => (e.target.style.borderColor = "#fff")}
-                  onBlur={(e) => (e.target.style.borderColor = "#2a2a2a")} />
-              </div>
-              <div>
-                <label htmlFor="reg-lastname" style={labelStyle}>Last Name</label>
-                <input id="reg-lastname" type="text" value={form.lastName} onChange={set("lastName")}
-                  required placeholder="Doe" style={inputStyle}
-                  onFocus={(e) => (e.target.style.borderColor = "#fff")}
-                  onBlur={(e) => (e.target.style.borderColor = "#2a2a2a")} />
-              </div>
+          {/* Header */}
+          <div style={{ marginBottom: "2.5rem" }}>
+            <div 
+              className="brand-tag lg:pt-3 lg:pl-3 lg:pr-2 lg:pb-2" 
+              style={{ fontSize: "0.8rem", marginBottom: "1.25rem", cursor: "pointer" }}
+              onClick={() => setShowSnakeGame(true)}
+              title="Access System Override"
+            >
+              &lt;The<br />Software<br />Society/&gt;
             </div>
-
-            {/* USN */}
-            <div>
-              <label htmlFor="reg-usn" style={labelStyle}>USN</label>
-              <input
-                id="reg-usn" type="text" value={form.usn} onChange={set("usn")}
-                required placeholder="2VDXXCSXXX"
-                style={{ ...inputStyle, fontFamily: "JetBrains Mono, monospace", textTransform: "uppercase",
-                  borderColor: form.usn && !usnValid ? "#5a5a5a" : "var(--border)" }}
-                onFocus={(e) => (e.target.style.borderColor = "var(--border-focus)")}
-                onBlur={(e) => (e.target.style.borderColor = form.usn && !usnValid ? "#5a5a5a" : "var(--border)")}
-              />
-              {form.usn && !usnValid && (
-                <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.6rem", color: "#5a5a5a", marginTop: "0.25rem" }}>
-                  Format: 2VDXXCSXXX
-                </p>
-              )}
-            </div>
-
-            {inputField("reg-email", "College Email", "email", "email", false, "2vdxxcsxxx@klsvdit.edu.in")}
-            {inputField("reg-leetcode", "LeetCode Username", "leetcodeUsername", "text", true, "john_doe")}
-
-            {/* Password */}
-            <div>
-              <label htmlFor="reg-password" style={labelStyle}>Password</label>
-              <input id="reg-password" type="password" value={form.password} onChange={set("password")}
-                required placeholder="Min 6 characters" style={inputStyle}
-                onFocus={(e) => (e.target.style.borderColor = "#fff")}
-                onBlur={(e) => (e.target.style.borderColor = "#2a2a2a")} />
-            </div>
-
-            {/* Confirm */}
-            <div>
-              <label htmlFor="reg-confirm" style={labelStyle}>Confirm Password</label>
-              <input
-                id="reg-confirm" type="password" value={form.confirmPassword} onChange={set("confirmPassword")}
-                required placeholder="Repeat password"
-                style={{ ...inputStyle, borderColor: form.confirmPassword && !pwdMatch ? "#5a5a5a" : "#2a2a2a" }}
-                onFocus={(e) => (e.target.style.borderColor = "#fff")}
-                onBlur={(e) => (e.target.style.borderColor = form.confirmPassword && !pwdMatch ? "#5a5a5a" : "#2a2a2a")}
-              />
-              {form.confirmPassword && !pwdMatch && (
-                <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.6rem", color: "#5a5a5a", marginTop: "0.25rem" }}>
-                  Passwords do not match
-                </p>
-              )}
-            </div>
-
-            {/* Account deletion warning */}
-            <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.58rem", color: "#3d3d3d", lineHeight: 1.6, marginTop: "-0.25rem" }}>
-              ⚠ Accounts cannot be deleted once created.
-            </p>
-
-            <button type="submit" id="register-send-otp" disabled={loading} className="btn-primary" style={{ width: "100%", marginTop: "0.5rem" }}>
-              {loading ? "Sending Code…" : "Send Verification Code →"}
-            </button>
-          </form>
-        )}
-
-        {/* ════════════════════════════════════════════════
-            STEP 2 — OTP Verification
-            ════════════════════════════════════════════════ */}
-        {step === 2 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-
-            {/* Email indicator */}
-            <div
+            <h1
+              className="display-heading"
+              style={{ fontSize: "clamp(2rem, 4vw, 3.6rem)", color: "var(--fg)", lineHeight: "1.1", wordBreak: "break-word" }}
+            >
+              JOIN<br />CHALLENGE 150.
+            </h1>
+            <p
               style={{
-                background: "#080808", border: "1px solid #1a1a1a",
-                padding: "0.875rem 1rem",
-                display: "flex", alignItems: "center", gap: "0.75rem",
+                fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem",
+                color: "var(--fg-muted)", marginTop: "0.75rem", textTransform: "uppercase",
+                letterSpacing: "0.1em",
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                <polyline points="22,6 12,13 2,6" />
-              </svg>
-              <div>
-                <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.58rem", color: "#555", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                  Code sent to
-                </p>
-                <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.75rem", color: "#d0d0d0", marginTop: "2px" }}>
-                  {form.email.trim().toLowerCase()}
-                </p>
+              Create your account to get started
+            </p>
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: "1px", background: "#1a1a1a", marginBottom: "2rem" }} />
+
+          {/* Step indicator */}
+          <StepIndicator step={step} />
+
+          {/* ════════════════════════════════════════════════
+              STEP 1 — Registration Form
+              ════════════════════════════════════════════════ */}
+          {step === 1 && (
+            <form onSubmit={handleSendOtp} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              {/* Name row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="reg-firstname" style={labelStyle}>First Name</label>
+                  <input id="reg-firstname" type="text" value={form.firstName} onChange={set("firstName")}
+                    required placeholder="John" style={inputStyle}
+                    onFocus={(e) => (e.target.style.borderColor = "#fff")}
+                    onBlur={(e) => (e.target.style.borderColor = "#2a2a2a")} />
+                </div>
+                <div>
+                  <label htmlFor="reg-lastname" style={labelStyle}>Last Name</label>
+                  <input id="reg-lastname" type="text" value={form.lastName} onChange={set("lastName")}
+                    required placeholder="Doe" style={inputStyle}
+                    onFocus={(e) => (e.target.style.borderColor = "#fff")}
+                    onBlur={(e) => (e.target.style.borderColor = "#2a2a2a")} />
+                </div>
               </div>
-            </div>
 
-            {/* OTP input label */}
-            <div>
-              <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.6rem", color: "#3d3d3d", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.875rem", textAlign: "center" }}>
-                Enter 6-digit verification code
+              {/* USN */}
+              <div>
+                <label htmlFor="reg-usn" style={labelStyle}>USN</label>
+                <input
+                  id="reg-usn" type="text" value={form.usn} onChange={set("usn")}
+                  required placeholder="2VDXXCSXXX"
+                  style={{ ...inputStyle, fontFamily: "JetBrains Mono, monospace", textTransform: "uppercase",
+                    borderColor: form.usn && !usnValid ? "#5a5a5a" : "var(--border)" }}
+                  onFocus={(e) => (e.target.style.borderColor = "var(--border-focus)")}
+                  onBlur={(e) => (e.target.style.borderColor = form.usn && !usnValid ? "#5a5a5a" : "var(--border)")}
+                />
+                {form.usn && !usnValid && (
+                  <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.75rem", color: "#5a5a5a", marginTop: "0.25rem" }}>
+                    Format: 2VDXXCSXXX
+                  </p>
+                )}
+              </div>
+
+              {inputField("reg-email", "College Email", "email", "email", false, "2vdxxcsxxx@klsvdit.edu.in")}
+              {inputField("reg-leetcode", "LeetCode Username", "leetcodeUsername", "text", true, "john_doe")}
+
+              {/* Password */}
+              <div>
+                <label htmlFor="reg-password" style={labelStyle}>Password</label>
+                <input id="reg-password" type="password" value={form.password} onChange={set("password")}
+                  required placeholder="Min 6 characters" style={inputStyle}
+                  onFocus={(e) => (e.target.style.borderColor = "#fff")}
+                  onBlur={(e) => (e.target.style.borderColor = "#2a2a2a")} />
+              </div>
+
+              {/* Confirm */}
+              <div>
+                <label htmlFor="reg-confirm" style={labelStyle}>Confirm Password</label>
+                <input
+                  id="reg-confirm" type="password" value={form.confirmPassword} onChange={set("confirmPassword")}
+                  required placeholder="Repeat password"
+                  style={{ ...inputStyle, borderColor: form.confirmPassword && !pwdMatch ? "#5a5a5a" : "#2a2a2a" }}
+                  onFocus={(e) => (e.target.style.borderColor = "#fff")}
+                  onBlur={(e) => (e.target.style.borderColor = form.confirmPassword && !pwdMatch ? "#5a5a5a" : "#2a2a2a")}
+                />
+                {form.confirmPassword && !pwdMatch && (
+                  <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.75rem", color: "#5a5a5a", marginTop: "0.25rem" }}>
+                    Passwords do not match
+                  </p>
+                )}
+              </div>
+
+              {/* Account deletion warning */}
+              <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.7rem", color: "#3d3d3d", lineHeight: 1.6, marginTop: "-0.25rem" }}>
+                ⚠ Accounts cannot be deleted once created.
               </p>
-              <OtpInput value={otp} onChange={setOtp} />
-            </div>
 
-            {/* Timer */}
-            <div style={{ textAlign: "center" }}>
-              {!expired ? (
-                <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.65rem", color: remaining < 60 ? "#f87171" : "#555" }}>
-                  Code expires in{" "}
-                  <span style={{ color: remaining < 60 ? "#f87171" : "#d0d0d0", fontWeight: 600 }}>
-                    {mins}:{secs}
-                  </span>
-                </p>
-              ) : (
-                <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.65rem", color: "#f87171" }}>
-                  Code expired.
-                </p>
-              )}
-            </div>
-
-            {/* Verify button */}
-            <button
-              id="register-verify-otp"
-              onClick={handleVerify}
-              disabled={verifying || otp.length < 6}
-              className="btn-primary"
-              style={{ width: "100%" }}
-            >
-              {verifying ? "Verifying…" : "Verify & Create Account →"}
-            </button>
-
-            {/* Resend + back */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <button
-                onClick={() => setStep(1)}
-                style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "JetBrains Mono, monospace", fontSize: "0.62rem", color: "#444", letterSpacing: "0.04em", padding: 0 }}
-                onMouseEnter={(e) => ((e.target as HTMLElement).style.color = "#888")}
-                onMouseLeave={(e) => ((e.target as HTMLElement).style.color = "#444")}
-              >
-                ← Edit Details
+              <button type="submit" id="register-send-otp" disabled={loading} className="btn-primary" style={{ width: "100%", marginTop: "0.5rem" }}>
+                {loading ? "Sending Code…" : "Send Verification Code →"}
               </button>
+            </form>
+          )}
 
-              <button
-                onClick={handleResend}
-                disabled={resending || resendSecsLeft > 0}
+          {/* ════════════════════════════════════════════════
+              STEP 2 — OTP Verification
+              ════════════════════════════════════════════════ */}
+          {step === 2 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+
+              {/* Email indicator */}
+              <div
                 style={{
-                  background: "none", border: "none",
-                  cursor: (resending || resendSecsLeft > 0) ? "not-allowed" : "pointer",
-                  fontFamily: "JetBrains Mono, monospace", fontSize: "0.62rem",
-                  color: (resending || resendSecsLeft > 0) ? "#333" : "#666",
-                  letterSpacing: "0.04em", padding: 0,
-                  textDecoration: "underline",
-                  transition: "color 100ms ease",
+                  background: "#080808", border: "1px solid #1a1a1a",
+                  padding: "0.875rem 1rem",
+                  display: "flex", alignItems: "center", gap: "0.75rem",
                 }}
               >
-                {resending
-                  ? "Sending…"
-                  : resendSecsLeft > 0
-                  ? `Resend in ${Math.floor(resendSecsLeft / 60)}:${String(resendSecsLeft % 60).padStart(2, "0")}`
-                  : "Resend Code"}
-              </button>
-            </div>
-          </div>
-        )}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                  <polyline points="22,6 12,13 2,6" />
+                </svg>
+                <div>
+                  <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.7rem", color: "#555", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                    Code sent to
+                  </p>
+                  <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.75rem", color: "#d0d0d0", marginTop: "2px" }}>
+                    {form.email.trim().toLowerCase()}
+                  </p>
+                </div>
+              </div>
 
-        {/* Sign-in link */}
-        {step === 1 && (
-          <p style={{ marginTop: "1.5rem", fontFamily: "JetBrains Mono, monospace", fontSize: "0.65rem", color: "#3d3d3d", textAlign: "center" }}>
-            Already a member?{" "}
-            <Link to="/login" style={{ color: "#8a8a8a", textDecoration: "underline" }}
-              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = "#fff")}
-              onMouseLeave={(e) => ((e.target as HTMLElement).style.color = "#8a8a8a")}>
-              Sign in
-            </Link>
-          </p>
-        )}
+              {/* OTP input label */}
+              <div>
+                <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.75rem", color: "#3d3d3d", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.875rem", textAlign: "center" }}>
+                  Enter 6-digit verification code
+                </p>
+                <OtpInput value={otp} onChange={setOtp} />
+              </div>
+
+              {/* Timer */}
+              <div style={{ textAlign: "center" }}>
+                {!expired ? (
+                  <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.75rem", color: remaining < 60 ? "#f87171" : "#555" }}>
+                    Code expires in{" "}
+                    <span style={{ color: remaining < 60 ? "#f87171" : "#d0d0d0", fontWeight: 600 }}>
+                      {mins}:{secs}
+                    </span>
+                  </p>
+                ) : (
+                  <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.75rem", color: "#f87171" }}>
+                    Code expired.
+                  </p>
+                )}
+              </div>
+
+              {/* Verify button */}
+              <button
+                id="register-verify-otp"
+                onClick={handleVerify}
+                disabled={verifying || otp.length < 6}
+                className="btn-primary"
+                style={{ width: "100%" }}
+              >
+                {verifying ? "Verifying…" : "Verify & Create Account →"}
+              </button>
+
+              {/* Resend + back */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <button
+                  onClick={() => setStep(1)}
+                  style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "JetBrains Mono, monospace", fontSize: "0.75rem", color: "#444", letterSpacing: "0.04em", padding: 0 }}
+                  onMouseEnter={(e) => ((e.target as HTMLElement).style.color = "#888")}
+                  onMouseLeave={(e) => ((e.target as HTMLElement).style.color = "#444")}
+                >
+                  ← Edit Details
+                </button>
+
+                <button
+                  onClick={handleResend}
+                  disabled={resending || resendSecsLeft > 0}
+                  style={{
+                    background: "none", border: "none",
+                    cursor: (resending || resendSecsLeft > 0) ? "not-allowed" : "pointer",
+                    fontFamily: "JetBrains Mono, monospace", fontSize: "0.75rem",
+                    color: (resending || resendSecsLeft > 0) ? "#333" : "#666",
+                    letterSpacing: "0.04em", padding: 0,
+                    textDecoration: "underline",
+                    transition: "color 100ms ease",
+                  }}
+                >
+                  {resending
+                    ? "Sending…"
+                    : resendSecsLeft > 0
+                    ? `Resend in ${Math.floor(resendSecsLeft / 60)}:${String(resendSecsLeft % 60).padStart(2, "0")}`
+                    : "Resend Code"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Sign-in link */}
+          {step === 1 && (
+            <p style={{ marginTop: "1.5rem", fontFamily: "JetBrains Mono, monospace", fontSize: "0.75rem", color: "#3d3d3d", textAlign: "center" }}>
+              Already a member?{" "}
+              <Link to="/login" style={{ color: "#8a8a8a", textDecoration: "underline" }}
+                onMouseEnter={(e) => ((e.target as HTMLElement).style.color = "#fff")}
+                onMouseLeave={(e) => ((e.target as HTMLElement).style.color = "#8a8a8a")}>
+                Sign in
+              </Link>
+            </p>
+          )}
+        </div>
       </div>
-    </div>
+      <SnakeGameModal open={showSnakeGame} onClose={() => setShowSnakeGame(false)} />
+    </>
   );
 }

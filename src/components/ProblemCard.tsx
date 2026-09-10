@@ -111,7 +111,7 @@ export default function ProblemCard({ problem, index }: ProblemCardProps) {
             width: "1.75rem",
             textAlign: "right",
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: "0.65rem",
+            fontSize: "0.75rem",
             color: isSolved ? "#2a2a2a" : "#555",
             userSelect: "none",
           }}
@@ -139,7 +139,7 @@ export default function ProblemCard({ problem, index }: ProblemCardProps) {
           <span
             style={{
               fontFamily: "'JetBrains Mono', monospace",
-              fontSize: "0.55rem",
+              fontSize: "0.7rem",
               color: isSolved ? "#333" : difficultyColor[problem.difficulty],
               opacity: isSolved ? 0.4 : 0.7,
               marginTop: "2px",
@@ -291,7 +291,7 @@ export default function ProblemCard({ problem, index }: ProblemCardProps) {
               style={{
                 display: "inline-flex", alignItems: "center", gap: "0.3rem",
                 fontFamily: "'JetBrains Mono', monospace",
-                fontSize: "0.6rem",
+                fontSize: "0.75rem",
                 color: accentColor,
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
@@ -312,7 +312,7 @@ export default function ProblemCard({ problem, index }: ProblemCardProps) {
             <span
               style={{
                 fontFamily: "'JetBrains Mono', monospace",
-                fontSize: "0.6rem",
+                fontSize: "0.75rem",
                 color: difficultyColor[problem.difficulty],
                 background: difficultyBg[problem.difficulty],
                 border: `1px solid ${difficultyColor[problem.difficulty]}44`,
@@ -339,7 +339,7 @@ export default function ProblemCard({ problem, index }: ProblemCardProps) {
               { label: "Week",       value: `Week ${problem.week}` },
             ].map(({ label, value }) => (
               <div key={label}>
-                <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.52rem", color: "#444", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "2px" }}>
+                <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.7rem", color: "#444", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "2px" }}>
                   {label}
                 </p>
                 <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.7rem", color: "#888", fontWeight: 600 }}>
@@ -359,7 +359,7 @@ export default function ProblemCard({ problem, index }: ProblemCardProps) {
               alignItems: "center",
               gap: "0.4rem",
               fontFamily: "'JetBrains Mono', monospace",
-              fontSize: "0.62rem",
+              fontSize: "0.75rem",
               color: "#3b82f6",
               letterSpacing: "0.04em",
               textDecoration: "none",

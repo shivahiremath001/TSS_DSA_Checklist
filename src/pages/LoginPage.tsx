@@ -5,250 +5,184 @@ import { useUser } from "../context/UserContext";
 import { apiLogin } from "../lib/api";
 import { sha256 } from "../lib/crypto";
 import ForgotPasswordModal from "../components/modals/ForgotPasswordModal";
-
+import SnakeGameModal from "../components/modals/SnakeGameModal";
 import { DEMO_USN, DEMO_PASSWORD, DEMO_USER, DEMO_SOLVED_ARRAY } from "../lib/demo";
 
 export default function LoginPage() {
   const { login } = useUser();
-  const navigate  = useNavigate();
-
-  const [usn, setUsn]               = useState("");
-  const [password, setPassword]     = useState("");
-  const [loading, setLoading]       = useState(false);
+  const navigate = useNavigate();
+  const [usn, setUsn] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
+  const [showSnakeGame, setShowSnakeGame] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!usn.trim() || !password) return;
     setLoading(true);
-
     try {
       const usnUpper = usn.toUpperCase();
 
-      /* ── Admin bypass ──────────── */
       if (usnUpper === "ADMIN" && password === "The*Software*Society@581329") {
-        login({
-          slNo: 0,
-          firstName: "Admin",
-          lastName: "User",
-          usn: "ADMIN",
-          email: "admin@klsvdit.edu.in",
-          leetcodeUsername: "admin",
-          totalSolved: 0,
-          percentage: 0
-        }, Array(150).fill(0), "The*Software*Society@581329");
-        toast.success("Welcome to Admin Dashboard!");
+        login({ slNo: 0, firstName: "Admin", lastName: "User", usn: "ADMIN", email: "admin@klsvdit.edu.in", leetcodeUsername: "admin", totalSolved: 0, percentage: 0 }, Array(150).fill(0), "The*Software*Society@581329");
+        toast.success("ACCESS GRANTED. Welcome, Commander.");
         navigate("/admin-dashboard", { replace: true });
         return;
       }
-
-      /* ── Demo bypass (USN: 2VD / Password: 2vd) ──────────── */
       if (usnUpper === DEMO_USN && password === DEMO_PASSWORD) {
         login(DEMO_USER, DEMO_SOLVED_ARRAY, "__demo__");
-        toast.success("Welcome, Demo User!");
+        toast.success("DEMO MODE ACTIVATED.");
         navigate("/dashboard", { replace: true });
         return;
       }
-
-      /* ── Real GAS auth ────────────────────────────────────── */
       const hash = await sha256(password);
       const data = await apiLogin({ usn: usnUpper, password: hash });
       login(data.user, data.solvedArray, hash);
-      toast.success(`Welcome back, ${data.user.firstName}.`);
+      toast.success(`IDENTITY VERIFIED. Welcome, ${data.user.firstName}.`);
       navigate("/dashboard", { replace: true });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Login failed.");
+      toast.error(err instanceof Error ? err.message : "ACCESS DENIED.");
     } finally {
       setLoading(false);
     }
   }
 
-
-  /* ─── shared input style ─── */
-  const inp: React.CSSProperties = {
-    display: "block", width: "100%", marginTop: "0.4rem",
-    background: "#000", border: "1px solid #333", color: "#fff",
-    padding: "0.65rem 0.9rem", fontSize: "0.9rem",
-    fontFamily: "'Space Grotesk', sans-serif", outline: "none",
-    transition: "border-color 120ms ease",
-  };
-  const lbl: React.CSSProperties = {
-    fontFamily: "'JetBrains Mono', monospace", fontSize: "0.75rem", fontWeight: 700,
-    textTransform: "uppercase" as const, letterSpacing: "0.12em", color: "#888",
-  };
-
   return (
     <>
-      {/* ── Full-screen split layout ── */}
-      <div
-        className="page-enter"
-        style={{
-          minHeight: "100vh",
-          background: "#000",
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-        }}
-      >
-        {/* ══════════ LEFT — Hero ══════════════════════════════ */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            padding: "2rem 2.5rem",
-            borderRight: "1px solid #111",
-          }}
-        >
-          {/* Brand tag — identical to reference image */}
-          <div
-            style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: "0.7rem",
-              fontWeight: 700,
-              color: "#fff",
-              lineHeight: 1.35,
-              letterSpacing: "0.02em",
-            }}
+      <div className="page-enter min-h-screen bg-[var(--bg)] grid grid-cols-1 lg:grid-cols-2">
+
+        {/* ══ LEFT – Hero Panel ══════════════════════════════════ */}
+        <div className="flex flex-col justify-center lg:justify-between gap-6 lg:gap-0 p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-[var(--border)] relative overflow-hidden">
+          {/* Corner decoration */}
+          <div style={{ position: "absolute", top: 0, left: 0, width: "120px", height: "120px", borderRight: "1px solid var(--border-glow)", borderBottom: "1px solid var(--border-glow)", pointerEvents: "none" }} />
+          <div style={{ position: "absolute", bottom: 0, right: 0, width: "80px", height: "80px", borderLeft: "1px solid var(--border-glow)", borderTop: "1px solid var(--border-glow)", pointerEvents: "none" }} />
+
+          {/* Brand */}
+          <div 
+            className="brand-tag lg:pt-3 lg:pl-3 lg:pr-2 lg:pb-2" 
+            style={{ fontSize: "0.8rem", cursor: "pointer" }}
+            onClick={() => setShowSnakeGame(true)}
+            title="Access System Override"
           >
-            &lt;The<br />
-            Software<br />
-            Society/&gt;
+            &lt;The<br />Software<br />Society/&gt;
           </div>
 
-          {/* Main hero text */}
+          {/* Hero */}
           <div>
-            <h1
-              style={{
-                fontFamily: "'Barlow Condensed', 'Space Grotesk', sans-serif",
-                fontWeight: 900,
-                textTransform: "uppercase",
-                fontSize: "clamp(3.75rem, 8.5vw, 7rem)",
-                lineHeight: 0.93,
-                color: "#fff",
-                letterSpacing: "-0.01em",
-              }}
-            >
+            <p className="hidden lg:block" style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", color: "var(--fg-muted)", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: "1rem" }}>
+              // MISSION ACTIVE
+            </p>
+            <h1 style={{
+              fontFamily: "'Orbitron', sans-serif",
+              fontWeight: 900,
+              fontSize: "clamp(2.5rem, 5vw, 4.5rem)",
+              lineHeight: 1.1,
+              wordBreak: "break-word",
+              color: "var(--fg)",
+              textShadow: "0 0 30px rgba(0,212,255,0.35), 0 0 80px rgba(0,212,255,0.1)",
+            }}>
               CHALLENGE<br />
-              150.
+              <span style={{ color: "var(--accent)", textShadow: "0 0 30px var(--accent), 0 0 80px var(--accent-glow)" }}>150</span>
             </h1>
-
-            {/* Tagline */}
-            <p
-              style={{
-                marginTop: "1.5rem",
-                fontSize: "1rem",
-                fontWeight: 700,
-                color: "#fff",
-                letterSpacing: "0.01em",
-              }}
-            >
-              Track. Solve. Lead.
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "1.5rem" }}>
+              <div style={{ height: "1px", width: "2rem", background: "var(--accent)", boxShadow: "0 0 6px var(--accent)" }} />
+              <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: "1rem", fontWeight: 600, color: "var(--fg-muted)", letterSpacing: "0.1em" }}>
+                TRACK · SOLVE · DOMINATE
+              </p>
+            </div>
+            <p className="hidden lg:block" style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: "0.95rem", color: "#1d3a52", lineHeight: 1.7, maxWidth: "280px", marginTop: "1rem" }}>
+              150 algorithmic missions. One leaderboard. Prove your skill.
             </p>
 
-            {/* Description — short, clearly readable */}
-            <p
-              style={{
-                marginTop: "0.6rem",
-                fontSize: "0.82rem",
-                color: "#888",
-                lineHeight: 1.65,
-                maxWidth: "300px",
-              }}
-            >
-              A selective collective of engineers pushing the boundaries of algorithmic excellence.
-            </p>
-
+            {/* XP progress teaser */}
+            <div className="hidden lg:flex" style={{ marginTop: "2rem", flexDirection: "column", gap: "0.4rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.7rem", color: "var(--fg-muted)", letterSpacing: "0.1em" }}>CHALLENGE PROGRESS</span>
+                <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.7rem", color: "var(--accent)" }}>101 / 150</span>
+              </div>
+              <div className="xp-bar-track">
+                <div style={{ height: "100%", width: "70%", background: "linear-gradient(90deg, var(--accent-dim), var(--accent))", boxShadow: "0 0 8px var(--accent)" }} />
+              </div>
+            </div>
           </div>
 
-          {/* Spacer for bottom alignment */}
-          <div />
+          {/* Bottom tag */}
+          <p className="hidden lg:block" style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.7rem", color: "#0d2035", letterSpacing: "0.12em" }}>
+            © THE SOFTWARE SOCIETY · KLS VDIT
+          </p>
         </div>
 
-        {/* ══════════ RIGHT — Sign-in form ═════════════════════ */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "2.5rem",
-          }}
-        >
-          <div style={{ width: "100%", maxWidth: "360px" }}>
-
-
-            <h2
-              style={{ fontSize: "1.5rem", fontWeight: 700, color: "#fff", marginBottom: "0.35rem" }}
-            >
-              Sign In
+        {/* ══ RIGHT – Login Form ══════════════════════════════════ */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "2rem",
+        }}>
+          <div style={{ width: "100%", maxWidth: "380px" }}>
+            <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "0.75rem" }}>
+              &gt;_ AUTHENTICATE
+            </p>
+            <h2 style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: "1.75rem", color: "var(--fg)", marginBottom: "0.35rem", letterSpacing: "0.05em" }}>
+              SIGN IN
             </h2>
-            <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: "0.65rem", color: "#555", marginBottom: "2rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              Enter your credentials
+            <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", color: "var(--fg-muted)", marginBottom: "2.5rem", letterSpacing: "0.08em" }}>
+              Enter your credentials to access the system
             </p>
 
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}>
-              {/* USN */}
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
               <div>
-                <label htmlFor="login-usn" style={lbl}>USN</label>
+                <label htmlFor="login-usn" style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--fg-muted)", display: "block", marginBottom: "0.5rem" }}>
+                  ◈ Player ID (USN)
+                </label>
                 <input
-                  id="login-usn" type="text" value={usn}
-                  onChange={(e) => setUsn(e.target.value.toUpperCase())}
-                  required autoComplete="username" placeholder="e.g. 2VDXXCSXXX"
-                  style={{ ...inp, fontFamily: "'JetBrains Mono',monospace", textTransform: "uppercase" }}
-                  onFocus={(e) => (e.target.style.borderColor = "#fff")}
-                  onBlur={(e) => (e.target.style.borderColor = "#333")}
+                  id="login-usn"
+                  type="text"
+                  value={usn}
+                  onChange={e => setUsn(e.target.value.toUpperCase())}
+                  required autoComplete="username"
+                  placeholder="e.g. 2VDXXCSXXX"
+                  className="input-field mono"
                 />
               </div>
 
-              {/* Password */}
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <label htmlFor="login-password" style={lbl}>Password</label>
-                  <button
-                    type="button"
-                    onClick={() => setShowForgot(true)}
-                    style={{ ...lbl, background: "none", border: "none", cursor: "pointer", color: "#555", transition: "color 100ms" }}
-                    onMouseEnter={(e) => ((e.target as HTMLElement).style.color = "#fff")}
-                    onMouseLeave={(e) => ((e.target as HTMLElement).style.color = "#555")}
-                  >
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                  <label htmlFor="login-password" style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--fg-muted)" }}>
+                    ◈ Access Key
+                  </label>
+                  <button type="button" onClick={() => setShowForgot(true)} style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.7rem", background: "none", border: "none", color: "var(--fg-muted)", cursor: "pointer", letterSpacing: "0.08em", textDecoration: "underline", textTransform: "uppercase" }}>
                     Forgot?
                   </button>
                 </div>
                 <input
-                  id="login-password" type="password" value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required autoComplete="current-password" placeholder="••••••••"
-                  style={inp}
-                  onFocus={(e) => (e.target.style.borderColor = "#fff")}
-                  onBlur={(e) => (e.target.style.borderColor = "#333")}
+                  id="login-password"
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required autoComplete="current-password"
+                  placeholder="••••••••••"
+                  className="input-field"
                 />
               </div>
 
-              {/* Submit */}
-              <button
-                type="submit" id="login-submit" disabled={loading}
-                className="btn-primary"
-                style={{ width: "100%", marginTop: "0.25rem" }}
-              >
-                {loading ? "Signing in…" : "Sign In →"}
+              <button type="submit" id="login-submit" disabled={loading} className="btn-primary" style={{ width: "100%", marginTop: "0.5rem" }}>
+                {loading ? "AUTHENTICATING..." : "ENTER SYSTEM →"}
               </button>
             </form>
 
-            <p style={{ marginTop: "1.5rem", fontFamily: "'JetBrains Mono',monospace", fontSize: "0.65rem", color: "#555", textAlign: "center" }}>
+            <p style={{ marginTop: "2rem", fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", color: "var(--fg-muted)", textAlign: "center", letterSpacing: "0.06em" }}>
               No account?{" "}
-              <Link
-                to="/register"
-                style={{ color: "#aaa", textDecoration: "underline", transition: "color 100ms" }}
-                onMouseEnter={(e) => ((e.target as HTMLElement).style.color = "#fff")}
-                onMouseLeave={(e) => ((e.target as HTMLElement).style.color = "#aaa")}
-              >
-                Register here
+              <Link to="/register" style={{ color: "var(--accent)", textDecoration: "underline", textShadow: "0 0 6px var(--accent)" }}>
+                Enlist here
               </Link>
             </p>
           </div>
         </div>
       </div>
-
       <ForgotPasswordModal open={showForgot} onClose={() => setShowForgot(false)} />
+      <SnakeGameModal open={showSnakeGame} onClose={() => setShowSnakeGame(false)} />
     </>
   );
 }

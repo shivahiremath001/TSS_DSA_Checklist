@@ -9,7 +9,6 @@ interface WeekFilterProps {
 export default function WeekFilter({ activeWeek, onChange }: WeekFilterProps) {
   const { solvedArray } = useUser();
 
-  // Compute which weeks are 100% complete
   const completedWeeks = new Set<number>();
   for (const w of WEEKS) {
     const weekProblems = PROBLEMS.filter((p) => p.week === w);
@@ -17,36 +16,25 @@ export default function WeekFilter({ activeWeek, onChange }: WeekFilterProps) {
     if (allDone) completedWeeks.add(w);
   }
 
+  const isCompleted = completedWeeks.has(activeWeek);
+
   return (
-    <div style={{ borderBottom: "1px solid #1a1a1a", paddingBottom: "1.25rem", marginBottom: "1.5rem" }}>
-      <p
-        style={{
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: "0.62rem",
-          color: "#777",
-          textTransform: "uppercase",
-          letterSpacing: "0.12em",
-          marginBottom: "0.75rem",
-        }}
-      >
-        Filter by Week
+    <div style={{ borderBottom: "1px solid var(--border)", paddingBottom: "1.25rem", marginBottom: "1.5rem" }}>
+      <p style={{
+        fontFamily: "'Share Tech Mono', monospace",
+        fontSize: "0.7rem",
+        color: "var(--fg-muted)",
+        textTransform: "uppercase",
+        letterSpacing: "0.16em",
+        marginBottom: "0.875rem",
+      }}>
+        ◈ Mission Phase
       </p>
 
-      <div className="flex flex-wrap gap-2">
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
         {WEEKS.map((w) => {
           const isActive    = activeWeek === w;
-          const isCompleted = completedWeeks.has(w);
-
-          // Style: green if completed, white if active, otherwise dim
-          const bg     = isActive ? (isCompleted ? "#16a34a" : "#fff")
-                       : isCompleted ? "#052e16"
-                       : "transparent";
-          const border = isActive ? (isCompleted ? "#16a34a" : "#fff")
-                       : isCompleted ? "#166534"
-                       : "#2a2a2a";
-          const color  = isActive ? (isCompleted ? "#fff" : "#000")
-                       : isCompleted ? "#4ade80"
-                       : "#777";
+          const isWeekDone  = completedWeeks.has(w);
 
           return (
             <button
@@ -55,57 +43,65 @@ export default function WeekFilter({ activeWeek, onChange }: WeekFilterProps) {
               onClick={() => onChange(w)}
               title={WEEK_NAMES[w]}
               style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: "0.65rem",
-                letterSpacing: "0.04em",
-                fontWeight: isActive ? 700 : 400,
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                border: `1.5px solid ${border}`,
-                background: bg,
-                color,
+                fontFamily: "'Orbitron', sans-serif",
+                fontSize: "0.7rem",
+                fontWeight: 700,
+                letterSpacing: "0.06em",
+                width: "38px",
+                height: "38px",
+                border: isActive
+                  ? `1px solid ${isWeekDone ? "var(--green)" : "var(--accent)"}`
+                  : isWeekDone
+                  ? "1px solid var(--green-dim)30"
+                  : "1px solid var(--border)",
+                background: isActive
+                  ? isWeekDone ? "var(--green-glow)" : "var(--accent-glow)"
+                  : isWeekDone ? "rgba(0,255,136,0.05)" : "var(--bg-card)",
+                color: isActive
+                  ? isWeekDone ? "var(--green)" : "var(--accent)"
+                  : isWeekDone ? "var(--green-dim)" : "var(--fg-muted)",
+                boxShadow: isActive
+                  ? `0 0 10px ${isWeekDone ? "var(--green-glow)" : "var(--accent-glow)"},
+                     inset 0 0 8px ${isWeekDone ? "var(--green-glow)" : "var(--accent-glow)"}`
+                  : "none",
+                textShadow: isActive ? `0 0 8px ${isWeekDone ? "var(--green)" : "var(--accent)"}` : "none",
                 cursor: "pointer",
-                transition: "all 120ms ease",
+                transition: "all 150ms ease",
                 position: "relative",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
+                clipPath: "polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px))",
               }}
             >
               {w}
-              {/* Green dot for completed week */}
-              {isCompleted && !isActive && (
-                <span
-                  style={{
-                    position: "absolute",
-                    top: "2px",
-                    right: "2px",
-                    width: "5px",
-                    height: "5px",
-                    borderRadius: "50%",
-                    background: "#4ade80",
-                  }}
-                />
+              {isWeekDone && !isActive && (
+                <span style={{
+                  position: "absolute",
+                  top: "2px",
+                  right: "2px",
+                  width: "5px",
+                  height: "5px",
+                  borderRadius: "50%",
+                  background: "var(--green)",
+                  boxShadow: "0 0 4px var(--green)",
+                }} />
               )}
             </button>
           );
         })}
       </div>
 
-      <p
-        style={{
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: "0.62rem",
-          color: completedWeeks.has(activeWeek) ? "#4ade80" : "#555",
-          marginTop: "0.625rem",
-          letterSpacing: "0.04em",
-        }}
-      >
-        {WEEK_NAMES[activeWeek]}
-        {completedWeeks.has(activeWeek) && "  ✓ COMPLETED"}
-      </p>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.75rem" }}>
+        <div style={{ width: "8px", height: "8px", background: isCompleted ? "var(--green)" : "var(--border)", borderRadius: "50%", boxShadow: isCompleted ? "0 0 8px var(--green)" : "none", transition: "all 300ms" }} />
+        <p style={{
+          fontFamily: "'Share Tech Mono', monospace",
+          fontSize: "0.75rem",
+          color: isCompleted ? "var(--green)" : "var(--fg-muted)",
+          letterSpacing: "0.08em",
+          textShadow: isCompleted ? "0 0 6px var(--green)" : "none",
+        }}>
+          {WEEK_NAMES[activeWeek]}
+          {isCompleted && " · PHASE CLEARED ✓"}
+        </p>
+      </div>
     </div>
   );
 }

@@ -21,9 +21,9 @@ export default function ForgotPasswordModal({ open, onClose }: ForgotPasswordMod
     try {
       await apiResetPassword({ usn: usn.toUpperCase(), email });
       setDone(true);
-      toast.success("Reset email sent!");
+      toast.success("RESET PROTOCOL INITIATED.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to reset password.");
+      toast.error(err instanceof Error ? err.message : "Failed to initiate reset.");
     } finally {
       setLoading(false);
     }
@@ -31,72 +31,73 @@ export default function ForgotPasswordModal({ open, onClose }: ForgotPasswordMod
 
   if (!open) return null;
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    background: "#000",
-    border: "1px solid #2a2a2a",
-    color: "#fff",
-    padding: "0.625rem 0.875rem",
-    fontSize: "0.875rem",
-    fontFamily: "Space Grotesk, sans-serif",
-    outline: "none",
-    marginTop: "0.375rem",
-  };
-
-  const labelStyle: React.CSSProperties = {
-    fontFamily: "JetBrains Mono, monospace",
-    fontSize: "0.6rem",
-    textTransform: "uppercase",
-    letterSpacing: "0.1em",
-    color: "#3d3d3d",
-  };
-
   return (
     <div
       style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}
       role="dialog" aria-modal="true" aria-labelledby="forgot-pwd-title"
     >
-      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.85)" }} onClick={handleClose} />
+      {/* Backdrop */}
+      <div 
+        style={{ position: "absolute", inset: 0, background: "rgba(2, 11, 24, 0.85)", backdropFilter: "blur(4px)" }} 
+        onClick={handleClose} 
+      />
 
+      {/* Modal */}
       <div
         className="page-enter"
         style={{
           position: "relative",
           width: "100%",
-          maxWidth: "380px",
-          background: "#000",
-          border: "1px solid #1a1a1a",
+          maxWidth: "420px",
+          background: "var(--bg-card)",
+          border: "1px solid var(--accent)",
           padding: "2rem",
+          boxShadow: "0 0 20px var(--accent-glow)",
+          clipPath: "polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))",
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.75rem" }}>
           <div>
-            <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.6rem", color: "#3d3d3d", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              Account Recovery
+            <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              &gt;_ RECOVERY SYSTEM
             </p>
-            <h2 id="forgot-pwd-title" style={{ fontSize: "1.25rem", fontWeight: 700, color: "#fff", marginTop: "0.25rem" }}>
-              Reset Password
+            <h2 id="forgot-pwd-title" style={{ fontFamily: "'Orbitron', sans-serif", fontSize: "1.25rem", fontWeight: 700, color: "var(--fg)", marginTop: "0.25rem", textShadow: "0 0 8px var(--accent-glow)" }}>
+              INITIATE RESET
             </h2>
           </div>
-          <button onClick={handleClose} style={{ color: "#3d3d3d", cursor: "pointer", background: "none", border: "none", fontSize: "1.25rem", lineHeight: 1 }}>×</button>
+          <button 
+            onClick={handleClose} 
+            style={{ 
+              color: "var(--fg-muted)", cursor: "pointer", background: "none", border: "none", 
+              fontSize: "2.5rem", lineHeight: 0.8, fontFamily: "'Share Tech Mono', monospace",
+              transition: "color 150ms, text-shadow 150ms"
+            }} 
+            aria-label="Close"
+            onMouseEnter={(e) => { e.currentTarget.style.color = "var(--danger)"; e.currentTarget.style.textShadow = "0 0 8px var(--danger)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--fg-muted)"; e.currentTarget.style.textShadow = "none"; }}
+          >
+            ×
+          </button>
         </div>
 
         {done ? (
           <div style={{ textAlign: "center", padding: "1rem 0" }}>
-            <p style={{ fontFamily: "Barlow Condensed, sans-serif", fontWeight: 900, fontSize: "3rem", color: "#fff", lineHeight: 1 }}>
+            <p style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: "3rem", color: "var(--green)", lineHeight: 1, textShadow: "0 0 12px var(--green-glow)" }}>
               SENT.
             </p>
-            <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.7rem", color: "#5a5a5a", marginTop: "0.75rem", lineHeight: 1.6 }}>
-              Check your inbox for a temporary password. Log in and update it immediately.
+            <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", color: "var(--fg-muted)", marginTop: "0.75rem", lineHeight: 1.6 }}>
+              Check your inbox for a temporary access key. Log in and reconfigure it immediately.
             </p>
             <button onClick={handleClose} className="btn-primary" style={{ marginTop: "1.5rem", width: "100%" }}>
-              Close
+              DISMISS
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
             <div>
-              <label style={labelStyle}>USN</label>
+              <label style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--fg-muted)", display: "block", marginBottom: "0.5rem" }}>
+                ◈ Player ID (USN)
+              </label>
               <input
                 id="forgot-pwd-usn"
                 type="text"
@@ -104,11 +105,13 @@ export default function ForgotPasswordModal({ open, onClose }: ForgotPasswordMod
                 onChange={(e) => setUsn(e.target.value.toUpperCase())}
                 required
                 placeholder="2VDXXCSXXX"
-                style={{ ...inputStyle, fontFamily: "JetBrains Mono, monospace", textTransform: "uppercase" }}
+                className="input-field mono"
               />
             </div>
             <div>
-              <label style={labelStyle}>Registered Email</label>
+              <label style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--fg-muted)", display: "block", marginBottom: "0.5rem" }}>
+                ◈ Registered Email
+              </label>
               <input
                 id="forgot-pwd-email"
                 type="email"
@@ -116,7 +119,7 @@ export default function ForgotPasswordModal({ open, onClose }: ForgotPasswordMod
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="your@gmail.com"
-                style={inputStyle}
+                className="input-field"
               />
             </div>
             <button
@@ -126,7 +129,7 @@ export default function ForgotPasswordModal({ open, onClose }: ForgotPasswordMod
               className="btn-primary"
               style={{ marginTop: "0.5rem", width: "100%" }}
             >
-              {loading ? "Sending…" : "Send Reset Email"}
+              {loading ? "TRANSMITTING..." : "SEND RESET KEY →"}
             </button>
           </form>
         )}

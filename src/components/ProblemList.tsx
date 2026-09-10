@@ -9,7 +9,7 @@ interface ProblemListProps {
 
 const colLabel: React.CSSProperties = {
   fontFamily: "'JetBrains Mono', monospace",
-  fontSize: "0.6rem",
+  fontSize: "0.75rem",
   color: "#555",
   textTransform: "uppercase",
   letterSpacing: "0.1em",
