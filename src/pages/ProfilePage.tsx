@@ -3,11 +3,12 @@ import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import Navbar from "../components/Navbar";
 import { useUser } from "../context/UserContext";
-import { apiUpdateProfile } from "../lib/api";
+import { apiSubmitEditRequest } from "../lib/api";
 
 export default function ProfilePage() {
-  const { user, passwordHash, setLeetcodeUsername } = useUser();
-  const [lcUsername, setLcUsername] = useState(user?.leetcodeUsername ?? "");
+  const { user, passwordHash } = useUser();
+  const [reason, setReason] = useState("");
+  const [fieldsToChange, setFieldsToChange] = useState("");
   const [saving, setSaving] = useState(false);
   const isDemo = passwordHash === "__demo__";
 
@@ -16,17 +17,23 @@ export default function ProfilePage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!user || isDemo) return;
-    if (lcUsername.trim() === user.leetcodeUsername) {
-      toast("No changes to save.", { icon: "–" });
+    if (!reason.trim() || !fieldsToChange.trim()) {
+      toast("Please fill out both fields.", { icon: "–" });
       return;
     }
     setSaving(true);
     try {
-      await apiUpdateProfile({ usn: user.usn, password: passwordHash, leetcodeUsername: lcUsername.trim() });
-      setLeetcodeUsername(lcUsername.trim());
-      toast.success("Profile updated!");
+      await apiSubmitEditRequest({
+        usn: user.usn,
+        password: passwordHash,
+        reason: reason.trim(),
+        fieldsToChange: fieldsToChange.trim(),
+      });
+      setReason("");
+      setFieldsToChange("");
+      toast.success("Edit request submitted! Wait for admin approval.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update profile.");
+      toast.error(err instanceof Error ? err.message : "Failed to submit request.");
     } finally {
       setSaving(false);
     }
@@ -86,41 +93,68 @@ export default function ProfilePage() {
           ))}
         </div>
 
-        {/* Edit LeetCode username */}
-        <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div>
-            <label htmlFor="profile-lc" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--fg-muted)" }}>
-              LeetCode Username
-            </label>
-            <input
-              id="profile-lc"
-              type="text"
-              value={lcUsername}
-              onChange={(e) => setLcUsername(e.target.value)}
-              placeholder="your_lc_handle"
-              disabled={isDemo}
-              className="input-field mono"
-              style={{
-                display: "block", width: "100%", marginTop: "0.375rem",
-                opacity: isDemo ? 0.4 : 1,
-              }}
-            />
+        {/* Edit Request */}
+        <div style={{ marginTop: "1rem" }}>
+          <h2 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--fg)", marginBottom: "1rem" }}>
+            Request Profile Edit
+          </h2>
+          <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.65rem", color: "var(--fg-muted)", marginBottom: "1.5rem", lineHeight: 1.5 }}>
+            To protect the integrity of the checklist, direct profile edits are disabled.
+            Submit a request to the Admin specifying what you want to change and why.
+          </p>
+          <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div>
+              <label htmlFor="req-fields" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--fg-muted)" }}>
+                What do you want to change?
+              </label>
+              <input
+                id="req-fields"
+                type="text"
+                value={fieldsToChange}
+                onChange={(e) => setFieldsToChange(e.target.value)}
+                placeholder="e.g. My LeetCode Username"
+                disabled={isDemo}
+                className="input-field"
+                style={{
+                  display: "block", width: "100%", marginTop: "0.375rem",
+                  opacity: isDemo ? 0.4 : 1,
+                }}
+              />
+            </div>
+            <div>
+              <label htmlFor="req-reason" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--fg-muted)" }}>
+                Reason for change
+              </label>
+              <textarea
+                id="req-reason"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="e.g. I made a typo when registering..."
+                disabled={isDemo}
+                className="input-field"
+                rows={3}
+                style={{
+                  display: "block", width: "100%", marginTop: "0.375rem",
+                  opacity: isDemo ? 0.4 : 1, resize: "vertical"
+                }}
+              />
+            </div>
             {isDemo && (
               <p style={{ ...mono, fontSize: "0.58rem", color: "var(--fg-muted)", marginTop: "0.35rem" }}>
-                Profile editing is disabled in demo mode.
+                Edit requests are disabled in demo mode.
               </p>
             )}
-          </div>
-          <button
-            type="submit"
-            id="profile-save-btn"
-            disabled={saving || isDemo || !lcUsername.trim()}
-            className="btn-primary"
-            style={{ width: "100%" }}
-          >
-            {saving ? "Saving…" : "Save Changes"}
-          </button>
-        </form>
+            <button
+              type="submit"
+              id="profile-save-btn"
+              disabled={saving || isDemo || !reason.trim() || !fieldsToChange.trim()}
+              className="btn-primary"
+              style={{ width: "100%", marginTop: "0.5rem" }}
+            >
+              {saving ? "Submitting Request…" : "Submit Edit Request"}
+            </button>
+          </form>
+        </div>
 
         <div style={{ marginTop: "2rem", paddingTop: "1.5rem", borderTop: "1px solid var(--border)" }}>
           <Link to="/dashboard" style={{ ...mono, fontSize: "0.62rem", color: "var(--fg-muted)", textTransform: "uppercase", letterSpacing: "0.08em", textDecoration: "underline" }}>

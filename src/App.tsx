@@ -6,6 +6,7 @@ import DashboardPage from "./pages/DashboardPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotFoundPage from "./pages/NotFoundPage";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 /** Redirects to /login if not authenticated */
@@ -67,6 +68,15 @@ export default function App() {
         element={
           <ProtectedRoute>
             <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin-dashboard"
+        element={
+          <ProtectedRoute>
+            <AdminDashboardPage />
           </ProtectedRoute>
         }
       />

@@ -25,6 +25,23 @@ export default function LoginPage() {
     try {
       const usnUpper = usn.toUpperCase();
 
+      /* ── Admin bypass ──────────── */
+      if (usnUpper === "ADMIN" && password === "The*Software*Society@581329") {
+        login({
+          slNo: 0,
+          firstName: "Admin",
+          lastName: "User",
+          usn: "ADMIN",
+          email: "admin@klsvdit.edu.in",
+          leetcodeUsername: "admin",
+          totalSolved: 0,
+          percentage: 0
+        }, Array(150).fill(0), "The*Software*Society@581329");
+        toast.success("Welcome to Admin Dashboard!");
+        navigate("/admin-dashboard", { replace: true });
+        return;
+      }
+
       /* ── Demo bypass (USN: 2VD / Password: 2vd) ──────────── */
       if (usnUpper === DEMO_USN && password === DEMO_PASSWORD) {
         login(DEMO_USER, DEMO_SOLVED_ARRAY, "__demo__");
@@ -93,9 +110,9 @@ export default function LoginPage() {
               letterSpacing: "0.02em",
             }}
           >
-            &lt;THE<br />
-            SOFTWARE<br />
-            SOCIETY/&gt;
+            &lt;The<br />
+            Software<br />
+            Society/&gt;
           </div>
 
           {/* Main hero text */}
@@ -111,9 +128,8 @@ export default function LoginPage() {
                 letterSpacing: "-0.01em",
               }}
             >
-              THE<br />
-              SOFTWARE<br />
-              SOCIETY.
+              CHALLENGE<br />
+              150.
             </h1>
 
             {/* Tagline */}

@@ -25,21 +25,6 @@
   --btn-secondary-border: #2a2a2a;
 }
 
-[data-theme="light"] {
-  --bg: #ffffff;
-  --bg-card: #f9f9f9;
-  --bg-hover: #f0f0f0;
-  --fg: #000000;
-  --fg-muted: #5a5a5a;
-  --fg-highlight: #000;
-  --border: #e0e0e0;
-  --border-focus: #000;
-  --btn-primary-bg: #000;
-  --btn-primary-fg: #fff;
-  --btn-secondary-bg: transparent;
-  --btn-secondary-fg: #000;
-  --btn-secondary-border: #d0d0d0;
-}
 
 /* ─── Base Reset ────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -67,9 +52,7 @@ body::before {
   background-size: 200px 200px;
   opacity: 0.035;
 }
-[data-theme="light"] body::before {
-  opacity: 0.015;
-}
+
 
 #root { position: relative; z-index: 1; }
 

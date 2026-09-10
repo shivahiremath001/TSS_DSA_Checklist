@@ -1,4 +1,4 @@
-# TSS DSA Checklist
+# Challenge 150 - TSS DSA Checklist
 
 A full-stack **DSA progress tracker** built for the TSS CS Club. Members can register, track which of the 150 curated DSA problems they've solved, and compete on a live leaderboard — all backed by a Google Sheet and Google Apps Script (no traditional server needed).
 

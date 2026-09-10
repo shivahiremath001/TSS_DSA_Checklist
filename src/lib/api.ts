@@ -124,3 +124,45 @@ export async function apiVerifyOtp(payload: {
 }): Promise<{ success: boolean; message: string }> {
   return post({ action: "verifyOtp", ...payload });
 }
+
+export interface EditRequest {
+  timestamp: number;
+  usn: string;
+  reason: string;
+  fieldsToChange: string;
+}
+
+export async function apiSubmitEditRequest(payload: {
+  usn: string;
+  password: string; // SHA-256 hashed
+  reason: string;
+  fieldsToChange: string;
+}): Promise<{ success: boolean; message: string }> {
+  return post({ action: "submitEditRequest", ...payload });
+}
+
+export async function apiGetEditRequests(payload: {
+  adminPassword: string;
+}): Promise<{ success: boolean; requests: EditRequest[] }> {
+  return post({ action: "getEditRequests", ...payload });
+}
+
+export async function apiGetAllUsers(payload: {
+  adminPassword: string;
+}): Promise<{ success: boolean; users: UserMeta[] }> {
+  return post({ action: "getAllUsers", ...payload });
+}
+
+export async function apiGetUserProgress(payload: {
+  adminPassword: string;
+  usn: string;
+}): Promise<{ success: boolean; solvedArray: number[] }> {
+  return post({ action: "getUserProgress", ...payload });
+}
+
+export async function apiRemoveUser(payload: {
+  adminPassword: string;
+  usn: string;
+}): Promise<{ success: boolean; message: string }> {
+  return post({ action: "removeUser", ...payload });
+}

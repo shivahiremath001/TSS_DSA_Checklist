@@ -310,13 +310,13 @@ export default function RegisterPage() {
         {/* Header */}
         <div style={{ marginBottom: "2.5rem" }}>
           <div className="brand-tag" style={{ marginBottom: "1.25rem" }}>
-            &lt;TSS DSA TRACKER/&gt;]
+            &lt;The Software Society/&gt;
           </div>
           <h1
             className="display-heading"
             style={{ fontSize: "clamp(2.5rem, 6vw, 4rem)", color: "#fff", lineHeight: "1" }}
           >
-            JOIN THE<br />SOCIETY.
+            JOIN<br />CHALLENGE 150.
           </h1>
           <p
             style={{

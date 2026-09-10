@@ -8,6 +8,7 @@ var USERS_SHEET    = "Users";
 var LB_SHEET       = "Leaderboard";
 var PROBLEMS_SHEET = "Problems";
 var PENDING_SHEET  = "PendingUsers";   // Temporary OTP store
+var EDIT_REQ_SHEET = "EditRequests";   // Stores edit requests
 
 // Total number of problems tracked
 var TOTAL_PROBLEMS = 150;
@@ -43,6 +44,11 @@ function doPost(e) {
       case "sendOtp":        result = sendOtp(request);        break;
       case "verifyOtp":      result = verifyOtp(request);      break;
       case "updateProfile":  result = updateProfile(request);  break;
+      case "submitEditRequest": result = submitEditRequest(request); break;
+      case "getEditRequests": result = getEditRequests(request); break;
+      case "getAllUsers":    result = getAllUsers(request); break;
+      case "getUserProgress": result = getUserProgress(request); break;
+      case "removeUser":     result = removeUser(request); break;
       default:
         result = { success: false, message: "Unknown action: " + action };
     }
@@ -487,4 +493,121 @@ function changePassword(req) {
 
   sheet.getRange(rowIdx, 7).setValue(req.newPassword);
   return { success: true, message: "Password changed successfully." };
+}
+
+// ============================================================
+//  ACTION: submitEditRequest
+//  Payload: usn, password, reason, fieldsToChange
+// ============================================================
+function submitEditRequest(req) {
+  var sheet = getSheet(USERS_SHEET);
+  var rowIdx = findUserRow(sheet, req.usn);
+
+  if (rowIdx === -1) return { success: false, message: "USN not found." };
+  
+  var row = getUserRow(sheet, rowIdx);
+  if (row[6] !== req.password) return { success: false, message: "Authentication failed." };
+
+  var reqSheet = getSheet(EDIT_REQ_SHEET);
+  if (!reqSheet) return { success: false, message: "EditRequests sheet not found." };
+
+  var timestamp = new Date().getTime();
+  reqSheet.appendRow([timestamp, req.usn.toUpperCase(), req.reason, req.fieldsToChange]);
+  
+  return { success: true, message: "Edit request submitted." };
+}
+
+// ============================================================
+//  ACTION: getEditRequests
+//  Payload: adminPassword
+// ============================================================
+function getEditRequests(req) {
+  if (req.adminPassword !== "The*Software*Society@581329") return { success: false, message: "Unauthorized." };
+
+  var reqSheet = getSheet(EDIT_REQ_SHEET);
+  if (!reqSheet) return { success: false, message: "EditRequests sheet not found." };
+
+  var data = reqSheet.getDataRange().getValues();
+  var requests = [];
+  // Assuming row 0 is header: Timestamp | USN | Reason | FieldsToChange
+  for (var i = 1; i < data.length; i++) {
+    if (!data[i][0]) continue;
+    requests.push({
+      timestamp: data[i][0],
+      usn: data[i][1],
+      reason: data[i][2],
+      fieldsToChange: data[i][3]
+    });
+  }
+
+  // Sort by timestamp descending
+  requests.sort(function(a, b) { return b.timestamp - a.timestamp; });
+
+  return { success: true, requests: requests };
+}
+
+// ============================================================
+//  ACTION: getAllUsers
+//  Payload: adminPassword
+// ============================================================
+function getAllUsers(req) {
+  if (req.adminPassword !== "The*Software*Society@581329") return { success: false, message: "Unauthorized." };
+
+  var sheet = getSheet(USERS_SHEET);
+  var data = sheet.getDataRange().getValues();
+  var users = [];
+
+  for (var i = 1; i < data.length; i++) {
+    var r = data[i];
+    if (!r[3]) continue; // skip empty USN
+    users.push({
+      slNo: r[0],
+      firstName: r[1],
+      lastName: r[2],
+      usn: r[3],
+      email: r[4],
+      leetcodeUsername: r[5],
+      totalSolved: r[7],
+      percentage: r[8]
+    });
+  }
+
+  return { success: true, users: users };
+}
+
+// ============================================================
+//  ACTION: getUserProgress
+//  Payload: adminPassword, usn
+// ============================================================
+function getUserProgress(req) {
+  if (req.adminPassword !== "The*Software*Society@581329") return { success: false, message: "Unauthorized." };
+
+  var sheet = getSheet(USERS_SHEET);
+  var rowIdx = findUserRow(sheet, req.usn);
+
+  if (rowIdx === -1) return { success: false, message: "USN not found." };
+  
+  var row = getUserRow(sheet, rowIdx);
+  var solvedArray = [];
+  for (var q = 0; q < TOTAL_PROBLEMS; q++) {
+    solvedArray.push(row[Q_START_COL - 1 + q] === 1 ? 1 : 0);
+  }
+
+  return { success: true, solvedArray: solvedArray };
+}
+
+// ============================================================
+//  ACTION: removeUser
+//  Payload: adminPassword, usn
+// ============================================================
+function removeUser(req) {
+  if (req.adminPassword !== "The*Software*Society@581329") return { success: false, message: "Unauthorized." };
+
+  var sheet = getSheet(USERS_SHEET);
+  var rowIdx = findUserRow(sheet, req.usn);
+
+  if (rowIdx === -1) return { success: false, message: "USN not found." };
+  
+  sheet.deleteRow(rowIdx);
+  return { success: true, message: "User " + req.usn + " removed." };
 }
