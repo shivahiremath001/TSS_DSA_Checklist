@@ -4,6 +4,7 @@ import Navbar from "../components/Navbar";
 import { useUser } from "../context/UserContext";
 import {
   apiGetEditRequests,
+  apiDeleteEditRequest,
   apiGetAllUsers,
   apiGetUserProgress,
   apiRemoveUser,
@@ -106,6 +107,17 @@ export default function AdminDashboardPage() {
       fetchUsers();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to remove user.");
+    }
+  }
+
+  async function handleDeleteRequest(timestamp: number, usn: string) {
+    if (!confirm(`Delete this edit request from ${usn}?`)) return;
+    try {
+      await apiDeleteEditRequest({ adminPassword: passwordHash, timestamp, usn });
+      toast.success("Edit request deleted.");
+      fetchRequests();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete request.");
     }
   }
 
@@ -219,6 +231,16 @@ export default function AdminDashboardPage() {
                           <p style={{ fontSize: "0.875rem", color: "#ccc", fontStyle: "italic" }}>"{req.reason}"</p>
                         </div>
                       </div>
+                    </div>
+                    <div>
+                      <button
+                        onClick={() => handleDeleteRequest(req.timestamp, req.usn)}
+                        style={{ ...mono, fontSize: "0.75rem", background: "none", border: "1px solid var(--border)", color: "#e05555", cursor: "pointer", padding: "0.5rem 1rem", textTransform: "uppercase", letterSpacing: "0.05em", transition: "background 100ms", borderRadius: "4px" }}
+                        onMouseEnter={e => (e.currentTarget.style.background = "rgba(224, 85, 85, 0.1)")}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                      >
+                        Dismiss
+                      </button>
                     </div>
                   </div>
                 ))}

@@ -3,7 +3,17 @@
 //  Deploy as Web App: Execute as "Me", Access "Anyone"
 // ============================================================
 
-var SPREADSHEET_ID = SpreadsheetApp.getActiveSpreadsheet().getId();
+// Safe getter — works both when bound (editor/web-app) and standalone
+function getSpreadsheet() {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (ss) return ss;
+  } catch (e) {}
+  // Fallback: paste your Sheet ID here if getActiveSpreadsheet() ever fails
+  // return SpreadsheetApp.openById("YOUR_SHEET_ID_HERE");
+  throw new Error("Could not access spreadsheet. Make sure the script is bound to a Google Sheet.");
+}
+
 var USERS_SHEET    = "Users";
 var LB_SHEET       = "Leaderboard";
 var PROBLEMS_SHEET = "Problems";
@@ -46,6 +56,7 @@ function doPost(e) {
       case "updateProfile":  result = updateProfile(request);  break;
       case "submitEditRequest": result = submitEditRequest(request); break;
       case "getEditRequests": result = getEditRequests(request); break;
+      case "deleteEditRequest": result = deleteEditRequest(request); break;
       case "getAllUsers":    result = getAllUsers(request); break;
       case "getUserProgress": result = getUserProgress(request); break;
       case "removeUser":     result = removeUser(request); break;
@@ -62,6 +73,59 @@ function doPost(e) {
   return output;
 }
 
+// ============================================================
+//  ONE-TIME SETUP FUNCTION
+//  Run this from the Apps Script Editor to initialize sheets.
+// ============================================================
+function setupSheets() {
+  var ss = getSpreadsheet();
+
+  // ── Helper: get or create a sheet ────────────────────────────
+  function getOrCreate(name) {
+    var sheet = ss.getSheetByName(name);
+    if (!sheet) sheet = ss.insertSheet(name);
+    return sheet;
+  }
+
+  // ── Helper: force-write header row (always overwrites row 1) ─
+  function setHeaders(sheet, headers) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.setFrozenRows(1);
+  }
+
+  // 1. Users Sheet
+  var usersSheet = getOrCreate(USERS_SHEET);
+  var userHeaders = ["Sl No", "First Name", "Last Name", "USN", "Email", "LeetCode", "PasswordHash", "TotalSolved", "Percentage"];
+  for (var i = 1; i <= TOTAL_PROBLEMS; i++) userHeaders.push("Q" + i);
+  userHeaders.push("LastResetTimestamp");
+  userHeaders.push("IsDeleted");
+  setHeaders(usersSheet, userHeaders);
+
+  // Add ADMIN row only if sheet is empty (just the header)
+  if (usersSheet.getLastRow() < 2) {
+    var adminRow = [1, "System", "Admin", "ADMIN", "admin@tss.com", "admin", sha256Hex("The*Software*Society@581329"), 0, 0];
+    usersSheet.appendRow(adminRow);
+  }
+
+  // 2. Leaderboard Sheet
+  var lbSheet = getOrCreate(LB_SHEET);
+  setHeaders(lbSheet, ["First Name", "Last Name", "USN", "LeetCode", "TotalSolved", "Percentage", "LastUpdated"]);
+
+  // 3. PendingUsers Sheet (for OTP)
+  var pendingSheet = getOrCreate(PENDING_SHEET);
+  setHeaders(pendingSheet, ["USN", "Email", "FirstName", "LastName", "LeetCode", "PasswordHash", "OTP", "ExpiryTimestamp"]);
+
+  // 4. EditRequests Sheet
+  var editReqSheet = getOrCreate(EDIT_REQ_SHEET);
+  setHeaders(editReqSheet, ["Timestamp", "USN", "Reason", "FieldsToChange", "Status"]);
+
+  // 5. Problems Sheet
+  var probSheet = getOrCreate(PROBLEMS_SHEET);
+  setHeaders(probSheet, ["Q_ID", "Title", "Difficulty", "Topic"]);
+
+  Logger.log("✅ All sheets initialized successfully!");
+}
+
 // Also allow GET for quick health-check from browser
 function doGet(e) {
   return ContentService
@@ -74,7 +138,7 @@ function doGet(e) {
 // ============================================================
 
 function getSheet(name) {
-  return SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name);
+  return getSpreadsheet().getSheetByName(name);
 }
 
 /** Returns the row index (1-based) for a user by USN, or -1 if not found. */
@@ -203,14 +267,14 @@ function sendOtp(req) {
   // ── Send OTP email ───────────────────────────────────────────
   MailApp.sendEmail({
     to:      req.email,
-    subject: "TSS DSA Tracker — Email Verification Code",
+    subject: "TSS DSA CHALLENGE 150 — Email Verification Code",
     body:
       "Hey " + req.firstName + ",\n\n" +
-      "Your verification code for TSS DSA Tracker is:\n\n" +
+      "Your verification code for TSS DSA CHALLENGE 150 is:\n\n" +
       "    " + otp + "\n\n" +
       "This code expires in 5 minutes.\n\n" +
       "If you didn't request this, ignore this email.\n\n" +
-      "— TSS CS Club"
+      "— The Software Society"
   });
 
   return { success: true, message: "OTP sent to " + req.email };
@@ -313,6 +377,11 @@ function login(req) {
     return { success: false, message: "Incorrect password." };
   }
 
+  // Check if soft deleted
+  if (row[160] === 1 || row[160] === true) {
+    return { success: false, message: "Account has been removed." };
+  }
+
   // Build solved array (Q1-Q150 = columns index 9..158)
   var solvedArray = [];
   for (var q = 0; q < TOTAL_PROBLEMS; q++) {
@@ -360,7 +429,58 @@ function updateProgress(req) {
   SpreadsheetApp.flush();
   var totalSolved = sheet.getRange(rowIdx, 8).getValue();
 
+  // Keep Leaderboard in sync
+  refreshLeaderboard();
+
   return { success: true, totalSolved: totalSolved };
+}
+
+// ============================================================
+//  HELPER: refreshLeaderboard
+//  Rebuilds the Leaderboard sheet from the Users sheet.
+//  Called after every updateProgress so the board stays live.
+// ============================================================
+function refreshLeaderboard() {
+  var usersSheet = getSheet(USERS_SHEET);
+  var lbSheet    = getSheet(LB_SHEET);
+  if (!usersSheet || !lbSheet) return;
+
+  var data = usersSheet.getDataRange().getValues();
+
+  // Collect all real users (skip header row 0, skip ADMIN)
+  var entries = [];
+  for (var i = 1; i < data.length; i++) {
+    var r = data[i];
+    if (!r[3] || String(r[3]).toUpperCase() === "ADMIN" || r[160] === 1 || r[160] === true) continue;
+    entries.push({
+      firstName:        String(r[1]),
+      lastName:         String(r[2]),
+      usn:              String(r[3]),
+      leetcodeUsername: String(r[5]),
+      totalSolved:      Number(r[7]),
+      percentage:       Number(r[8]),
+    });
+  }
+
+  // Sort descending by totalSolved, then by name
+  entries.sort(function(a, b) {
+    if (b.totalSolved !== a.totalSolved) return b.totalSolved - a.totalSolved;
+    return a.firstName.localeCompare(b.firstName);
+  });
+
+  // Clear old data (keep header row 1)
+  var lastRow = lbSheet.getLastRow();
+  if (lastRow > 1) {
+    lbSheet.getRange(2, 1, lastRow - 1, 7).clearContent();
+  }
+
+  // Write sorted entries starting at row 2
+  if (entries.length > 0) {
+    var rows = entries.map(function(e) {
+      return [e.firstName, e.lastName, e.usn, e.leetcodeUsername, e.totalSolved, e.percentage, new Date().toISOString()];
+    });
+    lbSheet.getRange(2, 1, rows.length, 7).setValues(rows);
+  }
 }
 
 // ============================================================
@@ -371,16 +491,13 @@ function getLeaderboard() {
   var sheet = getSheet(LB_SHEET);
   var data  = sheet.getDataRange().getValues();
 
-  // Row 0 = headers, rows 1.. = data (already sorted by SORT formula)
+  // Row 0 = headers: FirstName | LastName | USN | LeetCode | TotalSolved | Percentage | LastUpdated
   var rows = [];
-  var rank = 0;
-
   for (var i = 1; i < data.length; i++) {
     var r = data[i];
-    if (!r[0] && !r[2]) continue; // skip empty rows
-    rank++;
+    if (!r[2] || r[160] === 1 || r[160] === true) continue; // skip empty USN rows or deleted
     rows.push({
-      rank:             rank,
+      rank:             i,
       firstName:        r[0],
       lastName:         r[1],
       usn:              r[2],
@@ -464,12 +581,12 @@ function resetPassword(req) {
 
   MailApp.sendEmail({
     to:      req.email,
-    subject: "DSA Tracker – Password Reset",
+    subject: "TSS DSA CHALLENGE 150 – Password Reset",
     body:    "Hello " + row[1] + ",\n\n" +
-             "Your DSA Tracker password has been reset.\n\n" +
+             "Your TSS DSA CHALLENGE 150 password has been reset.\n\n" +
              "Temporary Password: " + tempPwd + "\n\n" +
              "Please log in and change your password immediately via Account Settings.\n\n" +
-             "— TSS CS Club"
+             "— The Software Society"
   });
 
   return { success: true, message: "A temporary password has been sent to your email." };
@@ -548,6 +665,27 @@ function getEditRequests(req) {
 }
 
 // ============================================================
+//  ACTION: deleteEditRequest
+//  Payload: adminPassword, timestamp, usn
+// ============================================================
+function deleteEditRequest(req) {
+  if (req.adminPassword !== "The*Software*Society@581329") return { success: false, message: "Unauthorized." };
+
+  var reqSheet = getSheet(EDIT_REQ_SHEET);
+  if (!reqSheet) return { success: false, message: "EditRequests sheet not found." };
+
+  var data = reqSheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0] == req.timestamp && data[i][1] === req.usn) {
+      reqSheet.deleteRow(i + 1);
+      return { success: true, message: "Edit request deleted." };
+    }
+  }
+
+  return { success: false, message: "Request not found." };
+}
+
+// ============================================================
 //  ACTION: getAllUsers
 //  Payload: adminPassword
 // ============================================================
@@ -560,7 +698,7 @@ function getAllUsers(req) {
 
   for (var i = 1; i < data.length; i++) {
     var r = data[i];
-    if (!r[3]) continue; // skip empty USN
+    if (!r[3] || r[160] === 1 || r[160] === true) continue; // skip empty USN or deleted
     users.push({
       slNo: r[0],
       firstName: r[1],
@@ -609,7 +747,8 @@ function removeUser(req) {
 
   if (rowIdx === -1) return { success: false, message: "USN not found." };
   
-  sheet.deleteRow(rowIdx);
+  // Soft delete by setting column 161 (IsDeleted) to 1
+  sheet.getRange(rowIdx, 161).setValue(1);
   return { success: true, message: "User " + req.usn + " removed." };
 }
 
@@ -627,7 +766,7 @@ function getAllUsersProgress(req) {
 
   for (var i = 1; i < data.length; i++) {
     var r = data[i];
-    if (!r[3]) continue; // skip empty USN rows
+    if (!r[3] || r[160] === 1 || r[160] === true) continue; // skip empty USN rows or deleted
     var solvedArray = [];
     for (var q = 0; q < TOTAL_PROBLEMS; q++) {
       solvedArray.push(r[Q_START_COL - 1 + q] === 1 ? 1 : 0);

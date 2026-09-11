@@ -147,6 +147,14 @@ export async function apiGetEditRequests(payload: {
   return post({ action: "getEditRequests", ...payload });
 }
 
+export async function apiDeleteEditRequest(payload: {
+  adminPassword: string;
+  timestamp: number;
+  usn: string;
+}): Promise<{ success: boolean; message: string }> {
+  return post({ action: "deleteEditRequest", ...payload });
+}
+
 export async function apiGetAllUsers(payload: {
   adminPassword: string;
 }): Promise<{ success: boolean; users: UserMeta[] }> {

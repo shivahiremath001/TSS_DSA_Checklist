@@ -63,34 +63,105 @@ const topicAccent: Record<string, string> = {
   "Bit Manipulation":     "#67e8f9",
 };
 
+// Debounce delay: 60 seconds
+const DEBOUNCE_MS = 60_000;
+
+// Module-level maps to store timers per problem ID (avoids stale closure issues)
+const syncTimers: Map<number, ReturnType<typeof setTimeout>>  = new Map();
+const cdTimers:   Map<number, ReturnType<typeof setInterval>> = new Map();
+
 export default function ProblemCard({ problem, index }: ProblemCardProps) {
   const { solvedArray, user, passwordHash, setSolved } = useUser();
   const isSolved  = solvedArray[index];
   const [loading, setLoading]   = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  async function handleToggle() {
-    if (!user || loading) return;
-    const newStatus = isSolved ? 0 : 1;
-    setSolved(index, !isSolved);
-    if (passwordHash === "__demo__") return;
+  // pendingStatus: null = nothing pending, 0/1 = waiting to sync that value
+  const [pendingStatus, setPendingStatus] = useState<0 | 1 | null>(null);
+  const [countdown, setCountdown]         = useState(0);
+
+  function cancelTimers() {
+    const st = syncTimers.get(problem.id);
+    const ct = cdTimers.get(problem.id);
+    if (st) { clearTimeout(st);  syncTimers.delete(problem.id); }
+    if (ct) { clearInterval(ct); cdTimers.delete(problem.id);   }
+  }
+
+  async function syncToServer(targetStatus: 0 | 1) {
+    if (!user || passwordHash === "__demo__") return;
     setLoading(true);
     try {
       await apiUpdateProgress({
         usn: user.usn,
         password: passwordHash,
         qNumber: problem.id,
-        status: newStatus as 0 | 1,
+        status: targetStatus,
       });
+      toast.success(
+        targetStatus === 1 ? `✓ Q${problem.id} synced!` : `✗ Q${problem.id} unsynced!`,
+        { id: `sync-${problem.id}`, duration: 2500 }
+      );
     } catch (err) {
-      setSolved(index, isSolved);
+      setSolved(index, targetStatus === 0); // rollback on failure
       toast.error(
-        err instanceof Error ? err.message : "Failed to save. Please retry.",
+        err instanceof Error ? err.message : "Sync failed. Please retry.",
         { id: `prob-${problem.id}` }
       );
     } finally {
       setLoading(false);
+      setPendingStatus(null);
+      setCountdown(0);
     }
+  }
+
+  function handleToggle() {
+    if (!user || loading) return;
+
+    const newSolved = !isSolved;
+    const newStatus = newSolved ? 1 : 0;
+
+    // Instant optimistic UI update
+    setSolved(index, newSolved);
+
+    if (passwordHash === "__demo__") return;
+
+    // If there's already a pending sync and the user just toggled back → cancel
+    if (pendingStatus !== null && newStatus !== pendingStatus) {
+      cancelTimers();
+      setPendingStatus(null);
+      setCountdown(0);
+      toast(`↩ Q${problem.id} sync cancelled`, { id: `cancel-${problem.id}`, duration: 2000 });
+      return;
+    }
+
+    // Cancel any existing timers before starting new ones
+    cancelTimers();
+
+    // Start fresh 60s debounce window
+    setPendingStatus(newStatus as 0 | 1);
+    setCountdown(DEBOUNCE_MS / 1000);
+
+    // Countdown ticker
+    const ct = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) { clearInterval(ct); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    cdTimers.set(problem.id, ct);
+
+    // Deferred sync
+    const st = setTimeout(() => {
+      cdTimers.delete(problem.id);
+      syncTimers.delete(problem.id);
+      syncToServer(newStatus as 0 | 1);
+    }, DEBOUNCE_MS);
+    syncTimers.set(problem.id, st);
+
+    toast(
+      newStatus === 1 ? `⏳ Q${problem.id} — syncing in 60s` : `⏳ Q${problem.id} unsolved — syncing in 60s`,
+      { id: `pending-${problem.id}`, duration: DEBOUNCE_MS }
+    );
   }
 
   const accentColor = topicAccent[problem.topic] ?? "#888";
@@ -193,41 +264,60 @@ export default function ProblemCard({ problem, index }: ProblemCardProps) {
           LC {problem.lcNumber}
         </a>
 
-        {/* 4. Checkbox */}
-        <button
-          id={`checkbox-q${problem.id}`}
-          onClick={handleToggle}
-          disabled={loading}
-          aria-label={`Mark problem ${problem.id} as ${isSolved ? "unsolved" : "solved"}`}
-          style={{
-            flexShrink: 0,
-            width: "20px",
-            height: "20px",
-            border: isSolved ? "1.5px solid #166534" : "1.5px solid #333",
-            background: isSolved ? "#052e16" : "transparent",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: loading ? "not-allowed" : "pointer",
-            opacity: loading ? 0.5 : 1,
-            transition: "all 120ms ease",
-          }}
-        >
-          {isSolved && !loading && (
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          )}
-          {loading && (
-            <div
-              style={{
+        {/* 4. Checkbox + pending countdown */}
+        <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
+          <button
+            id={`checkbox-q${problem.id}`}
+            onClick={handleToggle}
+            disabled={loading}
+            aria-label={`Mark problem ${problem.id} as ${isSolved ? "unsolved" : "solved"}`}
+            title={pendingStatus !== null ? `Syncing in ${countdown}s — click again to cancel` : undefined}
+            style={{
+              flexShrink: 0,
+              width: "20px",
+              height: "20px",
+              border: pendingStatus !== null
+                ? "1.5px solid #f59e0b"
+                : isSolved ? "1.5px solid #166534" : "1.5px solid #333",
+              background: isSolved ? "#052e16" : "transparent",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: loading ? "not-allowed" : "pointer",
+              opacity: loading ? 0.5 : 1,
+              transition: "all 120ms ease",
+              animation: pendingStatus !== null ? "pendingPulse 1.2s ease-in-out infinite" : "none",
+            }}
+          >
+            {isSolved && !loading && (
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+                stroke={pendingStatus !== null ? "#f59e0b" : "#4ade80"}
+                strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+            {loading && (
+              <div style={{
                 width: "9px", height: "9px",
                 border: "1.5px solid #333", borderTopColor: "#4ade80",
                 borderRadius: "50%", animation: "spin 0.6s linear infinite",
-              }}
-            />
+              }} />
+            )}
+          </button>
+          {/* Countdown badge */}
+          {pendingStatus !== null && countdown > 0 && (
+            <span style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: "0.55rem",
+              color: "#f59e0b",
+              lineHeight: 1,
+              userSelect: "none",
+            }}>
+              {countdown}s
+            </span>
           )}
-        </button>
+        </div>
+
 
         {/* 5. Expand arrow */}
         <button
