@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useUser } from "../context/UserContext";
 import { apiLogin } from "../lib/api";
 import { sha256 } from "../lib/crypto";
+import { Eye, EyeOff } from "lucide-react";
 import ForgotPasswordModal from "../components/modals/ForgotPasswordModal";
 import SnakeGameModal from "../components/modals/SnakeGameModal";
 import { DEMO_USN, DEMO_PASSWORD, DEMO_USER, DEMO_SOLVED_ARRAY } from "../lib/demo";
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [showSnakeGame, setShowSnakeGame] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -156,15 +158,39 @@ export default function LoginPage() {
                     Forgot?
                   </button>
                 </div>
-                <input
-                  id="login-password"
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required autoComplete="current-password"
-                  placeholder="••••••••••"
-                  className="input-field"
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    id="login-password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required autoComplete="current-password"
+                    placeholder="••••••••••"
+                    className="input-field"
+                    style={{ paddingRight: "2.5rem" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: "absolute",
+                      right: "0.75rem",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      color: "var(--fg-muted)",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "0.25rem",
+                    }}
+                    title={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
               <button type="submit" id="login-submit" disabled={loading} className="btn-primary" style={{ width: "100%", marginTop: "0.5rem" }}>

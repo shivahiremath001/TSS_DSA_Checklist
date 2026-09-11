@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { useUser } from "../../context/UserContext";
 import { apiChangePassword } from "../../lib/api";
 import { sha256 } from "../../lib/crypto";
+import { Eye, EyeOff } from "lucide-react";
 
 interface ChangePasswordModalProps {
   open: boolean;
@@ -15,6 +16,10 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
   const [newPwd, setNewPwd]       = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
   const [loading, setLoading]     = useState(false);
+  
+  const [showOldPwd, setShowOldPwd] = useState(false);
+  const [showNewPwd, setShowNewPwd] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
 
   function handleClose() {
     setOldPwd(""); setNewPwd(""); setConfirmPwd("");
@@ -97,24 +102,51 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
           <div>
             <label style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--fg-muted)", display: "block", marginBottom: "0.5rem" }}>◈ Current Key</label>
-            <input id="change-pwd-old" type="password" value={oldPwd} onChange={(e) => setOldPwd(e.target.value)} required placeholder="Current access key" className="input-field" />
+            <div style={{ position: "relative" }}>
+              <input id="change-pwd-old" type={showOldPwd ? "text" : "password"} value={oldPwd} onChange={(e) => setOldPwd(e.target.value)} required placeholder="Current access key" className="input-field" style={{ paddingRight: "2.5rem" }} />
+              <button
+                type="button"
+                onClick={() => setShowOldPwd(!showOldPwd)}
+                style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--fg-muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem" }}
+              >
+                {showOldPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
           <div>
             <label style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--fg-muted)", display: "block", marginBottom: "0.5rem" }}>◈ New Key</label>
-            <input id="change-pwd-new" type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} required placeholder="Min 6 characters" className="input-field" />
+            <div style={{ position: "relative" }}>
+              <input id="change-pwd-new" type={showNewPwd ? "text" : "password"} value={newPwd} onChange={(e) => setNewPwd(e.target.value)} required placeholder="Min 6 characters" className="input-field" style={{ paddingRight: "2.5rem" }} />
+              <button
+                type="button"
+                onClick={() => setShowNewPwd(!showNewPwd)}
+                style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--fg-muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem" }}
+              >
+                {showNewPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
           <div>
             <label style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--fg-muted)", display: "block", marginBottom: "0.5rem" }}>◈ Verify Key</label>
-            <input
-              id="change-pwd-confirm"
-              type="password"
-              value={confirmPwd}
-              onChange={(e) => setConfirmPwd(e.target.value)}
-              required
-              placeholder="Repeat new access key"
-              className="input-field"
-              style={{ borderColor: confirmPwd && confirmPwd !== newPwd ? "var(--danger)" : undefined }}
-            />
+            <div style={{ position: "relative" }}>
+              <input
+                id="change-pwd-confirm"
+                type={showConfirmPwd ? "text" : "password"}
+                value={confirmPwd}
+                onChange={(e) => setConfirmPwd(e.target.value)}
+                required
+                placeholder="Repeat new access key"
+                className="input-field"
+                style={{ paddingRight: "2.5rem", borderColor: confirmPwd && confirmPwd !== newPwd ? "var(--danger)" : undefined }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPwd(!showConfirmPwd)}
+                style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--fg-muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem" }}
+              >
+                {showConfirmPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
             {confirmPwd && confirmPwd !== newPwd && (
               <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", color: "var(--danger)", marginTop: "0.35rem" }}>
                 KEYS DO NOT MATCH

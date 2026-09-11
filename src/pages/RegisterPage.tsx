@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { apiSendOtp, apiVerifyOtp } from "../lib/api";
 import { sha256 } from "../lib/crypto";
+import { Eye, EyeOff } from "lucide-react";
 import SnakeGameModal from "../components/modals/SnakeGameModal";
 
 // ─── Shared styles ────────────────────────────────────────────────────────────
@@ -163,6 +164,8 @@ export default function RegisterPage() {
   });
   const [loading, setLoading] = useState(false);
   const [showSnakeGame, setShowSnakeGame] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Step 2 state
   const [step, setStep]         = useState<1 | 2>(1);
@@ -390,22 +393,66 @@ export default function RegisterPage() {
               {/* Password */}
               <div>
                 <label htmlFor="reg-password" style={labelStyle}>Password</label>
-                <input id="reg-password" type="password" value={form.password} onChange={set("password")}
-                  required placeholder="Min 6 characters" style={inputStyle}
-                  onFocus={(e) => (e.target.style.borderColor = "#fff")}
-                  onBlur={(e) => (e.target.style.borderColor = "#2a2a2a")} />
+                <div style={{ position: "relative" }}>
+                  <input id="reg-password" type={showPassword ? "text" : "password"} value={form.password} onChange={set("password")}
+                    required placeholder="Min 6 characters" style={{ ...inputStyle, paddingRight: "2.5rem" }}
+                    onFocus={(e) => (e.target.style.borderColor = "#fff")}
+                    onBlur={(e) => (e.target.style.borderColor = "#2a2a2a")} />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: "absolute",
+                      right: "0.75rem",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      color: "var(--fg-muted)",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "0.25rem",
+                    }}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
               {/* Confirm */}
               <div>
                 <label htmlFor="reg-confirm" style={labelStyle}>Confirm Password</label>
-                <input
-                  id="reg-confirm" type="password" value={form.confirmPassword} onChange={set("confirmPassword")}
-                  required placeholder="Repeat password"
-                  style={{ ...inputStyle, borderColor: form.confirmPassword && !pwdMatch ? "#5a5a5a" : "#2a2a2a" }}
-                  onFocus={(e) => (e.target.style.borderColor = "#fff")}
-                  onBlur={(e) => (e.target.style.borderColor = form.confirmPassword && !pwdMatch ? "#5a5a5a" : "#2a2a2a")}
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    id="reg-confirm" type={showConfirmPassword ? "text" : "password"} value={form.confirmPassword} onChange={set("confirmPassword")}
+                    required placeholder="Repeat password"
+                    style={{ ...inputStyle, paddingRight: "2.5rem", borderColor: form.confirmPassword && !pwdMatch ? "#5a5a5a" : "#2a2a2a" }}
+                    onFocus={(e) => (e.target.style.borderColor = "#fff")}
+                    onBlur={(e) => (e.target.style.borderColor = form.confirmPassword && !pwdMatch ? "#5a5a5a" : "#2a2a2a")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={{
+                      position: "absolute",
+                      right: "0.75rem",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      color: "var(--fg-muted)",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "0.25rem",
+                    }}
+                  >
+                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
                 {form.confirmPassword && !pwdMatch && (
                   <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "0.75rem", color: "#5a5a5a", marginTop: "0.25rem" }}>
                     Passwords do not match
