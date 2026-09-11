@@ -4,11 +4,26 @@ import StatsWidget from "../components/StatsWidget";
 import WeekFilter from "../components/WeekFilter";
 import ProblemList from "../components/ProblemList";
 import { useUser } from "../context/UserContext";
+import { useEffect } from "react";
+import WelcomeModal from "../components/modals/WelcomeModal";
+import AboutModal from "../components/modals/AboutModal";
 
 export default function DashboardPage() {
   const { user, passwordHash } = useUser();
   const isDemo = passwordHash === "__demo__";
   const [activeWeek, setActiveWeek] = useState<number>(1);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
+
+  useEffect(() => {
+    if (user && !isDemo) {
+      const storageKey = `hasSeenWelcome_${user.usn}`;
+      if (!localStorage.getItem(storageKey)) {
+        localStorage.setItem(storageKey, "true");
+        setShowWelcome(true);
+      }
+    }
+  }, [user, isDemo]);
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
@@ -64,6 +79,19 @@ export default function DashboardPage() {
         <WeekFilter activeWeek={activeWeek} onChange={setActiveWeek} />
         <ProblemList activeWeek={activeWeek} />
       </main>
+
+      <WelcomeModal
+        open={showWelcome}
+        firstName={user?.firstName || "Hacker"}
+        onNext={() => {
+          setShowWelcome(false);
+          setShowAbout(true);
+        }}
+      />
+      <AboutModal
+        open={showAbout}
+        onClose={() => setShowAbout(false)}
+      />
     </div>
   );
 }

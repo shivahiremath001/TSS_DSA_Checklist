@@ -4,9 +4,10 @@ import toast from "react-hot-toast";
 import { useUser } from "../context/UserContext";
 import { apiLogin } from "../lib/api";
 import { sha256 } from "../lib/crypto";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Info } from "lucide-react";
 import ForgotPasswordModal from "../components/modals/ForgotPasswordModal";
 import SnakeGameModal from "../components/modals/SnakeGameModal";
+import AboutModal from "../components/modals/AboutModal";
 import { DEMO_USN, DEMO_PASSWORD, DEMO_USER, DEMO_SOLVED_ARRAY } from "../lib/demo";
 
 export default function LoginPage() {
@@ -18,6 +19,7 @@ export default function LoginPage() {
   const [showForgot, setShowForgot] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showSnakeGame, setShowSnakeGame] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -123,7 +125,7 @@ export default function LoginPage() {
           padding: "2rem",
         }}>
           <div style={{ width: "100%", maxWidth: "380px" }}>
-            <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "0.75rem" }}>
+            <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "0.5rem" }}>
               &gt;_ AUTHENTICATE
             </p>
             <h2 style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: "1.75rem", color: "var(--fg)", marginBottom: "0.35rem", letterSpacing: "0.05em" }}>
@@ -207,8 +209,43 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+      <button
+        onClick={() => setShowAbout(true)}
+        title="About Challenge 150"
+        style={{
+          position: "fixed",
+          top: "1.5rem",
+          right: "1.5rem",
+          zIndex: 40,
+          background: "rgba(2, 11, 24, 0.5)",
+          backdropFilter: "blur(4px)",
+          border: "1px solid var(--border)",
+          color: "var(--fg-muted)",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "0.5rem",
+          borderRadius: "50%",
+          transition: "color 150ms ease, background 150ms ease, border-color 150ms ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = "var(--accent)";
+          e.currentTarget.style.background = "rgba(0, 212, 255, 0.1)";
+          e.currentTarget.style.borderColor = "var(--accent)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = "var(--fg-muted)";
+          e.currentTarget.style.background = "rgba(2, 11, 24, 0.5)";
+          e.currentTarget.style.borderColor = "var(--border)";
+        }}
+      >
+        <Info size={22} />
+      </button>
+
       <ForgotPasswordModal open={showForgot} onClose={() => setShowForgot(false)} />
       <SnakeGameModal open={showSnakeGame} onClose={() => setShowSnakeGame(false)} />
+      <AboutModal open={showAbout} onClose={() => setShowAbout(false)} />
     </>
   );
 }

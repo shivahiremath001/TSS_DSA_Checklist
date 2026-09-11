@@ -3,12 +3,14 @@ import { useState } from "react";
 import { useUser } from "../context/UserContext";
 import ChangePasswordModal from "./modals/ChangePasswordModal";
 import SnakeGameModal from "./modals/SnakeGameModal";
+import AboutModal from "./modals/AboutModal";
 
 export default function Navbar() {
   const { user, logout } = useUser();
   const location = useLocation();
   const [showChangePwd, setShowChangePwd] = useState(false);
   const [showSnakeGame, setShowSnakeGame] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
 
   const isAdmin = user?.usn === "ADMIN";
 
@@ -119,6 +121,50 @@ export default function Navbar() {
                 </Link>
               );
             })}
+            {/* About Button */}
+            <button
+              onClick={() => setShowAbout(true)}
+              className="whitespace-nowrap"
+              style={{
+                fontFamily: "'Orbitron', sans-serif",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                color: showAbout ? "var(--accent)" : "var(--fg-muted)",
+                textShadow: showAbout ? "0 0 10px var(--accent)" : "none",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: "0",
+                paddingBottom: "2px",
+                position: "relative",
+                transition: "color 150ms, text-shadow 150ms",
+              }}
+              onMouseEnter={e => {
+                if (!showAbout) {
+                  e.currentTarget.style.color = "#e0f2ff";
+                }
+              }}
+              onMouseLeave={e => {
+                if (!showAbout) {
+                  e.currentTarget.style.color = "var(--fg-muted)";
+                }
+              }}
+            >
+              System Info
+              {showAbout && (
+                <span style={{
+                  position: "absolute",
+                  bottom: "-4px",
+                  left: 0,
+                  right: 0,
+                  height: "1px",
+                  background: "var(--accent)",
+                  boxShadow: "0 0 6px var(--accent)",
+                }} />
+              )}
+            </button>
           </div>
 
           {/* ── Right side Desktop ─────────────────────────────── */}
@@ -160,6 +206,7 @@ export default function Navbar() {
 
       <ChangePasswordModal open={showChangePwd} onClose={() => setShowChangePwd(false)} />
       <SnakeGameModal open={showSnakeGame} onClose={() => setShowSnakeGame(false)} />
+      <AboutModal open={showAbout} onClose={() => setShowAbout(false)} />
     </>
   );
 }

@@ -63,12 +63,7 @@ const topicAccent: Record<string, string> = {
   "Bit Manipulation":     "#67e8f9",
 };
 
-// Debounce delay: 60 seconds
-const DEBOUNCE_MS = 60_000;
-
-// Module-level maps to store timers per problem ID (avoids stale closure issues)
-const syncTimers: Map<number, ReturnType<typeof setTimeout>>  = new Map();
-const cdTimers:   Map<number, ReturnType<typeof setInterval>> = new Map();
+// Removed debounce timers
 
 export default function ProblemCard({ problem, index }: ProblemCardProps) {
   const { solvedArray, user, passwordHash, setSolved } = useUser();
@@ -76,16 +71,7 @@ export default function ProblemCard({ problem, index }: ProblemCardProps) {
   const [loading, setLoading]   = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  // pendingStatus: null = nothing pending, 0/1 = waiting to sync that value
-  const [pendingStatus, setPendingStatus] = useState<0 | 1 | null>(null);
-  const [countdown, setCountdown]         = useState(0);
 
-  function cancelTimers() {
-    const st = syncTimers.get(problem.id);
-    const ct = cdTimers.get(problem.id);
-    if (st) { clearTimeout(st);  syncTimers.delete(problem.id); }
-    if (ct) { clearInterval(ct); cdTimers.delete(problem.id);   }
-  }
 
   async function syncToServer(targetStatus: 0 | 1) {
     if (!user || passwordHash === "__demo__") return;
@@ -109,8 +95,6 @@ export default function ProblemCard({ problem, index }: ProblemCardProps) {
       );
     } finally {
       setLoading(false);
-      setPendingStatus(null);
-      setCountdown(0);
     }
   }
 
@@ -125,43 +109,8 @@ export default function ProblemCard({ problem, index }: ProblemCardProps) {
 
     if (passwordHash === "__demo__") return;
 
-    // If there's already a pending sync and the user just toggled back → cancel
-    if (pendingStatus !== null && newStatus !== pendingStatus) {
-      cancelTimers();
-      setPendingStatus(null);
-      setCountdown(0);
-      toast(`↩ Q${problem.id} sync cancelled`, { id: `cancel-${problem.id}`, duration: 2000 });
-      return;
-    }
-
-    // Cancel any existing timers before starting new ones
-    cancelTimers();
-
-    // Start fresh 60s debounce window
-    setPendingStatus(newStatus as 0 | 1);
-    setCountdown(DEBOUNCE_MS / 1000);
-
-    // Countdown ticker
-    const ct = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) { clearInterval(ct); return 0; }
-        return prev - 1;
-      });
-    }, 1000);
-    cdTimers.set(problem.id, ct);
-
-    // Deferred sync
-    const st = setTimeout(() => {
-      cdTimers.delete(problem.id);
-      syncTimers.delete(problem.id);
-      syncToServer(newStatus as 0 | 1);
-    }, DEBOUNCE_MS);
-    syncTimers.set(problem.id, st);
-
-    toast(
-      newStatus === 1 ? `⏳ Q${problem.id} — syncing in 60s` : `⏳ Q${problem.id} unsolved — syncing in 60s`,
-      { id: `pending-${problem.id}`, duration: DEBOUNCE_MS }
-    );
+    // Instant sync
+    syncToServer(newStatus as 0 | 1);
   }
 
   const accentColor = topicAccent[problem.topic] ?? "#888";
@@ -271,14 +220,11 @@ export default function ProblemCard({ problem, index }: ProblemCardProps) {
             onClick={handleToggle}
             disabled={loading}
             aria-label={`Mark problem ${problem.id} as ${isSolved ? "unsolved" : "solved"}`}
-            title={pendingStatus !== null ? `Syncing in ${countdown}s — click again to cancel` : undefined}
             style={{
               flexShrink: 0,
               width: "20px",
               height: "20px",
-              border: pendingStatus !== null
-                ? "1.5px solid #f59e0b"
-                : isSolved ? "1.5px solid #166534" : "1.5px solid #333",
+              border: isSolved ? "1.5px solid #166534" : "1.5px solid #333",
               background: isSolved ? "#052e16" : "transparent",
               display: "flex",
               alignItems: "center",
@@ -286,12 +232,11 @@ export default function ProblemCard({ problem, index }: ProblemCardProps) {
               cursor: loading ? "not-allowed" : "pointer",
               opacity: loading ? 0.5 : 1,
               transition: "all 120ms ease",
-              animation: pendingStatus !== null ? "pendingPulse 1.2s ease-in-out infinite" : "none",
             }}
           >
             {isSolved && !loading && (
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-                stroke={pendingStatus !== null ? "#f59e0b" : "#4ade80"}
+                stroke="#4ade80"
                 strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
@@ -304,18 +249,7 @@ export default function ProblemCard({ problem, index }: ProblemCardProps) {
               }} />
             )}
           </button>
-          {/* Countdown badge */}
-          {pendingStatus !== null && countdown > 0 && (
-            <span style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: "0.55rem",
-              color: "#f59e0b",
-              lineHeight: 1,
-              userSelect: "none",
-            }}>
-              {countdown}s
-            </span>
-          )}
+
         </div>
 
 
