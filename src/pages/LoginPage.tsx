@@ -200,11 +200,14 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <p style={{ marginTop: "2rem", fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", color: "var(--fg-muted)", textAlign: "center", letterSpacing: "0.06em" }}>
+            <p style={{ marginTop: "2rem", fontFamily: "'Inter', sans-serif", fontSize: "0.75rem", color: "var(--fg-muted)", textAlign: "center", letterSpacing: "0.06em" }}>
               No account?{" "}
-              <Link to="/register" style={{ color: "var(--accent)", textDecoration: "underline", textShadow: "0 0 6px var(--accent)" }}>
+              <Link to="/register" style={{ color: "var(--accent)", textDecoration: "underline" }}>
                 Enlist here
               </Link>
+            </p>
+            <p style={{ marginTop: "1rem", fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", color: "var(--fg-muted)", textAlign: "center", opacity: 0.7 }}>
+              Disclaimer: This is an open-source student club project by The Software Society. Do not use your real banking or corporate passwords.
             </p>
           </div>
         </div>
