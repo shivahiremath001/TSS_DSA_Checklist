@@ -57,14 +57,14 @@ export default function LoginPage() {
       <div className="page-enter min-h-screen bg-[var(--bg)] grid grid-cols-1 lg:grid-cols-2">
 
         {/* ══ LEFT – Hero Panel ══════════════════════════════════ */}
-        <div className="flex flex-col justify-center lg:justify-between gap-6 lg:gap-0 p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-[var(--border)] relative overflow-hidden">
+        <div className="flex flex-col justify-center lg:justify-between gap-6 lg:gap-0 p-8 lg:p-12 border-b lg:border-b-0 lg:border-r border-[var(--border)] relative overflow-hidden">
           {/* Corner decoration */}
           <div style={{ position: "absolute", top: 0, left: 0, width: "120px", height: "120px", borderRight: "1px solid var(--border-glow)", borderBottom: "1px solid var(--border-glow)", pointerEvents: "none" }} />
           <div style={{ position: "absolute", bottom: 0, right: 0, width: "80px", height: "80px", borderLeft: "1px solid var(--border-glow)", borderTop: "1px solid var(--border-glow)", pointerEvents: "none" }} />
 
           {/* Brand */}
           <div 
-            className="brand-tag lg:pt-3 lg:pl-3 lg:pr-2 lg:pb-2" 
+            className="brand-tag pl-1 lg:pt-3 lg:pl-4 lg:pr-2 lg:pb-2" 
             style={{ fontSize: "0.8rem", cursor: "pointer" }}
             onClick={() => setShowSnakeGame(true)}
             title="Access System Override"
@@ -73,7 +73,7 @@ export default function LoginPage() {
           </div>
 
           {/* Hero */}
-          <div>
+          <div style={{ paddingLeft: "clamp(1rem, 6vw, 6rem)" }}>
             <p className="hidden lg:block" style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", color: "var(--fg-muted)", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: "1rem" }}>
               // MISSION ACTIVE
             </p>
