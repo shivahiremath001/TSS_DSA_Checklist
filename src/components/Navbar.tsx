@@ -36,45 +36,20 @@ export default function Navbar() {
         {/* Top accent line */}
         <div style={{ height: "2px", background: "linear-gradient(90deg, transparent, var(--accent), var(--purple), transparent)" }} />
 
-        <div className="max-w-[1280px] mx-auto flex flex-col md:flex-row md:h-14 items-center justify-between px-4 sm:px-6 py-3 md:py-0 gap-3 md:gap-0">
+        <div className="max-w-[1280px] mx-auto flex flex-wrap md:flex-nowrap items-center justify-between px-4 sm:px-6 py-3 md:py-0 md:h-14">
 
-          {/* Top row for mobile: Brand + Right Side */}
-          <div className="w-full md:w-auto flex justify-between items-center">
-            {/* ── Brand ─────────────────────────────────── */}
-            <div 
-              className="brand-tag" 
-              style={{ fontSize: "0.7rem", lineHeight: 1.5, letterSpacing: "0.06em", cursor: "pointer" }}
-              onClick={() => setShowSnakeGame(true)}
-              title="Access System Override"
-            >
-              &lt;The<br className="hidden md:block" />Software<br className="hidden md:block" />Society/&gt;
-            </div>
-
-            {/* Mobile-only right side actions */}
-            <div className="flex md:hidden items-center gap-2">
-              {!isAdmin && (
-                <button
-                  id="account-settings-btn-mobile"
-                  onClick={() => setShowChangePwd(true)}
-                  className="btn-secondary"
-                  style={{ fontSize: "0.7rem", padding: "0.4rem 0.6rem" }}
-                >
-                  Settings
-                </button>
-              )}
-              <button
-                id="logout-btn-mobile"
-                onClick={logout}
-                className="btn-primary"
-                style={{ fontSize: "0.7rem", padding: "0.4rem 0.6rem" }}
-              >
-                {isAdmin ? "Disconnect" : "Logout"}
-              </button>
-            </div>
+          {/* ── Brand ─────────────────────────────────── */}
+          <div 
+            className="brand-tag order-1" 
+            style={{ fontSize: "0.7rem", lineHeight: 1.5, letterSpacing: "0.06em", cursor: "pointer" }}
+            onClick={() => setShowSnakeGame(true)}
+            title="Access System Override"
+          >
+            &lt;The<br className="hidden md:block" />Software<br className="hidden md:block" />Society/&gt;
           </div>
 
           {/* ── Nav Links ─────────────────────────────── */}
-          <div className="flex items-center gap-4 sm:gap-8 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-hide" style={{ WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
+          <div className="order-3 md:order-2 flex items-center gap-4 sm:gap-8 overflow-x-auto w-full md:w-auto mt-3 md:mt-0 pb-1 md:pb-0 scrollbar-hide" style={{ WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
             {navLinks.map((link) => {
               const isActive = location.pathname === link.href;
               return (
@@ -167,10 +142,10 @@ export default function Navbar() {
             </button>
           </div>
 
-          {/* ── Right side Desktop ─────────────────────────────── */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* ── Right side Actions ─────────────────────────────── */}
+          <div className="order-2 md:order-3 flex items-center gap-2 md:gap-3">
             {user && (
-              <span style={{
+              <span className="hidden md:inline-block" style={{
                 fontFamily: "'Share Tech Mono', monospace",
                 fontSize: "0.75rem",
                 color: isAdmin ? "var(--gold)" : "var(--fg-muted)",
@@ -186,7 +161,7 @@ export default function Navbar() {
                 id="account-settings-btn"
                 onClick={() => setShowChangePwd(true)}
                 className="btn-secondary"
-                style={{ fontSize: "0.7rem", padding: "0.4rem 0.9rem" }}
+                style={{ fontSize: "0.7rem", padding: "0.4rem 0.8rem" }}
               >
                 Settings
               </button>
@@ -196,7 +171,7 @@ export default function Navbar() {
               id="logout-btn"
               onClick={logout}
               className="btn-primary"
-              style={{ fontSize: "0.7rem", padding: "0.4rem 0.9rem" }}
+              style={{ fontSize: "0.7rem", padding: "0.4rem 0.8rem" }}
             >
               {isAdmin ? "Disconnect" : "Logout"}
             </button>
