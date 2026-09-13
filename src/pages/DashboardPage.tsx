@@ -132,6 +132,7 @@ export default function DashboardPage() {
             setLeetcodeUsername(newUsername);
           }
         }}
+        onCancel={() => setShowLeetcodeVerify(false)}
       />
     </div>
   );

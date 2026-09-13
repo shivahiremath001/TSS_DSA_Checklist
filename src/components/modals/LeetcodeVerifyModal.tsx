@@ -6,9 +6,10 @@ import { apiUpdateProfile } from "../../lib/api";
 interface LeetcodeVerifyModalProps {
   open: boolean;
   onSuccess: (newUsername: string) => void;
+  onCancel?: () => void;
 }
 
-export default function LeetcodeVerifyModal({ open, onSuccess }: LeetcodeVerifyModalProps) {
+export default function LeetcodeVerifyModal({ open, onSuccess, onCancel }: LeetcodeVerifyModalProps) {
   const { user, passwordHash } = useUser();
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
@@ -112,14 +113,27 @@ export default function LeetcodeVerifyModal({ open, onSuccess }: LeetcodeVerifyM
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={loading || !username.trim()}
-            className="btn-primary"
-            style={{ marginTop: "0.5rem", width: "100%" }}
-          >
-            {loading ? "VERIFYING..." : "VERIFY & OVERRIDE →"}
-          </button>
+          <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>
+            {onCancel && (
+              <button
+                type="button"
+                onClick={onCancel}
+                className="btn-secondary"
+                style={{ flex: 1 }}
+                disabled={loading}
+              >
+                EXIT
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={loading || !username.trim()}
+              className="btn-primary"
+              style={{ flex: 2 }}
+            >
+              {loading ? "VERIFYING..." : "VERIFY & OVERRIDE →"}
+            </button>
+          </div>
         </form>
       </div>
     </div>
