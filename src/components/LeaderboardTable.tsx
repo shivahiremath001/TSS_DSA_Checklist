@@ -128,15 +128,9 @@ export default function LeaderboardTable({ entries, loading }: LeaderboardTableP
                       </span>
                     </td>
                     <td style={cellBase}>
-                      <a
-                        href={`https://leetcode.com/${entry.leetcodeUsername}`}
-                        target="_blank" rel="noopener noreferrer"
-                        style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", color: "var(--accent-dim)", transition: "color 100ms, text-shadow 100ms" }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--accent)"; (e.currentTarget as HTMLAnchorElement).style.textShadow = "0 0 6px var(--accent)"; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--accent-dim)"; (e.currentTarget as HTMLAnchorElement).style.textShadow = "none"; }}
-                      >
+                      <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", color: "var(--fg-muted)" }}>
                         {entry.leetcodeUsername || "—"}
-                      </a>
+                      </span>
                     </td>
                     <td style={cellBase}>
                       <span style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: "1rem", color: isTop3 ? rs.color : "var(--fg)", textShadow: isTop3 ? `0 0 8px ${rs.color}` : "none" }}>

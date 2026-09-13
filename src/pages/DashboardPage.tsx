@@ -7,6 +7,7 @@ import { useUser } from "../context/UserContext";
 import { useEffect } from "react";
 import WelcomeModal from "../components/modals/WelcomeModal";
 import AboutModal from "../components/modals/AboutModal";
+import LeetcodeVerifyModal from "../components/modals/LeetcodeVerifyModal";
 
 export default function DashboardPage() {
   const { user, passwordHash } = useUser();
@@ -14,6 +15,7 @@ export default function DashboardPage() {
   const [activeWeek, setActiveWeek] = useState<number>(1);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
+  const [showLeetcodeVerify, setShowLeetcodeVerify] = useState(false);
 
   useEffect(() => {
     if (user && !isDemo) {
@@ -21,6 +23,35 @@ export default function DashboardPage() {
       if (!localStorage.getItem(storageKey)) {
         localStorage.setItem(storageKey, "true");
         setShowWelcome(true);
+      }
+
+      // Verify LeetCode username lazily
+      if (user.leetcodeUsername) {
+        const lcStorageKey = `lc_verified_${user.usn}`;
+        if (!localStorage.getItem(lcStorageKey) && !sessionStorage.getItem(lcStorageKey)) {
+          const verify = async () => {
+            try {
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 8000);
+              const lcRes = await fetch(`https://alfa-leetcode-api.onrender.com/${user.leetcodeUsername}`, {
+                signal: controller.signal
+              });
+              clearTimeout(timeoutId);
+              if (lcRes.ok) {
+                const lcData = await lcRes.json();
+                if (lcData.errors && lcData.errors.length > 0) {
+                  setShowLeetcodeVerify(true);
+                  return;
+                }
+              }
+              localStorage.setItem(lcStorageKey, "true");
+            } catch (err) {
+              // Assume valid for this session only on timeout/network error
+              sessionStorage.setItem(lcStorageKey, "true");
+            }
+          };
+          verify();
+        }
       }
     }
   }, [user, isDemo]);
@@ -91,6 +122,17 @@ export default function DashboardPage() {
       <AboutModal
         open={showAbout}
         onClose={() => setShowAbout(false)}
+      />
+      <LeetcodeVerifyModal
+        open={showLeetcodeVerify}
+        onSuccess={() => {
+          setShowLeetcodeVerify(false);
+          if (user) {
+            localStorage.setItem(`lc_verified_${user.usn}`, "true");
+            // Reload to update user context with new username
+            window.location.reload();
+          }
+        }}
       />
     </div>
   );

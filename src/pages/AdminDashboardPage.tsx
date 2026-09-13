@@ -21,12 +21,13 @@ type Tab = "requests" | "users" | "leaderboard" | "sheet";
 
 export default function AdminDashboardPage() {
   const { user, passwordHash } = useUser();
-  const [activeTab, setActiveTab] = useState<Tab>("requests");
+  const [activeTab, setActiveTab] = useState<Tab>("users");
 
   const [requests, setRequests] = useState<EditRequest[]>([]);
   const [users, setUsers] = useState<UserMeta[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [sheetUsers, setSheetUsers] = useState<UserWithProgress[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [loading, setLoading] = useState(false);
 
@@ -127,8 +128,8 @@ export default function AdminDashboardPage() {
   const cellPad: React.CSSProperties = { padding: "0.65rem 0.875rem" };
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: "requests",    label: "EDIT REQUESTS" },
     { id: "users",       label: "USERS" },
+    { id: "requests",    label: "EDIT REQUESTS" },
     { id: "leaderboard", label: "LEADERBOARD" },
     { id: "sheet",       label: "SHEET VIEW" },
   ];
@@ -258,7 +259,27 @@ export default function AdminDashboardPage() {
               <h2 style={{ fontWeight: 700, fontSize: "1.1rem" }}>
                 All Users <span style={{ ...mono, fontSize: "0.7rem", ...muted, fontWeight: 400 }}>({users.length} total)</span>
               </h2>
-              <button onClick={fetchUsers} style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "var(--fg-muted)", cursor: "pointer", textDecoration: "underline" }}>↺ Refresh</button>
+              <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                <input 
+                  type="text" 
+                  placeholder="Search USN, Name, or LeetCode..." 
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  style={{
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border)",
+                    color: "var(--fg)",
+                    padding: "0.5rem 0.75rem",
+                    fontSize: "0.75rem",
+                    fontFamily: "'JetBrains Mono', monospace",
+                    width: "250px",
+                    outline: "none"
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = "var(--fg-muted)")}
+                  onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
+                />
+                <button onClick={fetchUsers} style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "var(--fg-muted)", cursor: "pointer", textDecoration: "underline" }}>↺ Refresh</button>
+              </div>
             </div>
             <div style={{ overflowX: "auto", border: "1px solid var(--border)" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.825rem" }}>
@@ -272,7 +293,12 @@ export default function AdminDashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((u, i) => (
+                  {users.filter(u => {
+                    const q = searchQuery.toLowerCase();
+                    return u.usn.toLowerCase().includes(q) || 
+                           `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) ||
+                           (u.leetcodeUsername && u.leetcodeUsername.toLowerCase().includes(q));
+                  }).map((u, i) => (
                     <tr key={u.usn} style={{ borderBottom: "1px solid #0f0f0f", transition: "background 100ms" }}
                       onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-hover)")}
                       onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
@@ -281,7 +307,13 @@ export default function AdminDashboardPage() {
                       <td style={{ ...cellPad, ...mono, fontSize: "0.75rem", fontWeight: 700, color: "var(--fg)" }}>{u.usn}</td>
                       <td style={{ ...cellPad }}>{u.firstName} {u.lastName}</td>
                       <td style={{ ...cellPad, ...mono, fontSize: "0.7rem", ...muted }}>{u.email}</td>
-                      <td style={{ ...cellPad, ...mono, fontSize: "0.7rem" }}>{u.leetcodeUsername || "—"}</td>
+                      <td style={{ ...cellPad, ...mono, fontSize: "0.7rem" }}>
+                        {u.leetcodeUsername ? (
+                          <a href={`https://leetcode.com/${u.leetcodeUsername}`} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)", textDecoration: "underline" }} onClick={e => e.stopPropagation()}>
+                            {u.leetcodeUsername}
+                          </a>
+                        ) : "—"}
+                      </td>
                       <td style={{ ...cellPad }}>
                         <span style={{ ...mono, fontSize: "0.75rem", fontWeight: 700 }}>{u.totalSolved}</span>
                         <span style={{ ...muted, ...mono, fontSize: "0.75rem" }}>/150</span>
@@ -425,7 +457,13 @@ export default function AdminDashboardPage() {
                       </td>
                       <td style={{ ...cellPad, fontWeight: 600 }}>{entry.firstName} {entry.lastName}</td>
                       <td style={{ ...cellPad, ...mono, fontSize: "0.7rem", ...muted }}>{entry.usn}</td>
-                      <td style={{ ...cellPad, ...mono, fontSize: "0.7rem" }}>{entry.leetcodeUsername || "—"}</td>
+                      <td style={{ ...cellPad, ...mono, fontSize: "0.7rem" }}>
+                        {entry.leetcodeUsername ? (
+                          <a href={`https://leetcode.com/${entry.leetcodeUsername}`} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)", textDecoration: "underline" }} onClick={e => e.stopPropagation()}>
+                            {entry.leetcodeUsername}
+                          </a>
+                        ) : "—"}
+                      </td>
                       <td style={{ ...cellPad }}>
                         <span style={{ ...mono, fontWeight: 700 }}>{entry.totalSolved}</span>
                         <span style={{ ...muted, ...mono, fontSize: "0.75rem" }}>/150</span>
