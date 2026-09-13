@@ -10,7 +10,7 @@ import AboutModal from "../components/modals/AboutModal";
 import LeetcodeVerifyModal from "../components/modals/LeetcodeVerifyModal";
 
 export default function DashboardPage() {
-  const { user, passwordHash } = useUser();
+  const { user, passwordHash, setLeetcodeUsername } = useUser();
   const isDemo = passwordHash === "__demo__";
   const [activeWeek, setActiveWeek] = useState<number>(1);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -125,12 +125,11 @@ export default function DashboardPage() {
       />
       <LeetcodeVerifyModal
         open={showLeetcodeVerify}
-        onSuccess={() => {
+        onSuccess={(newUsername) => {
           setShowLeetcodeVerify(false);
           if (user) {
             localStorage.setItem(`lc_verified_${user.usn}`, "true");
-            // Reload to update user context with new username
-            window.location.reload();
+            setLeetcodeUsername(newUsername);
           }
         }}
       />
