@@ -154,7 +154,7 @@ export default function LoginPage() {
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
                   <label htmlFor="login-password" style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--fg-muted)" }}>
-                    ◈ Access Key
+                    ◈ Password
                   </label>
                   <button type="button" onClick={() => setShowForgot(true)} style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: "0.7rem", background: "none", border: "none", color: "var(--fg-muted)", cursor: "pointer", letterSpacing: "0.08em", textDecoration: "underline", textTransform: "uppercase" }}>
                     Forgot?
