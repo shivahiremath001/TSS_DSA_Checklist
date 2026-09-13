@@ -81,7 +81,19 @@ export async function apiGetLeaderboard(): Promise<{
   success: boolean;
   leaderboard: LeaderboardEntry[];
 }> {
-  return post({ action: "getLeaderboard" });
+  const res = await post<{ success: boolean; leaderboard: LeaderboardEntry[] }>({ action: "getLeaderboard" });
+  if (res.success && res.leaderboard) {
+    let currentRank = 0;
+    let prevSolved = -1;
+    res.leaderboard.forEach((entry) => {
+      if (entry.totalSolved !== prevSolved) {
+        currentRank += 1; // Dense ranking (1, 2, 2, 3...)
+        prevSolved = entry.totalSolved;
+      }
+      entry.rank = currentRank;
+    });
+  }
+  return res;
 }
 
 export async function apiResetPassword(payload: {

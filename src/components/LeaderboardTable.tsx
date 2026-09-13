@@ -94,12 +94,12 @@ export default function LeaderboardTable({ entries, loading }: LeaderboardTableP
                   <tr
                     key={entry.usn}
                     style={{
-                      background: isTop3 ? `${rs?.glow}10` : "transparent",
+                      background: "transparent",
                       transition: "background 100ms ease",
                       borderLeft: isTop3 ? `2px solid ${rs?.color}55` : "2px solid transparent",
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-hover)")}
-                    onMouseLeave={e => (e.currentTarget.style.background = isTop3 ? `${rs?.glow}10` : "transparent")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                   >
                     <td style={cellBase}>
                       {isTop3 ? (

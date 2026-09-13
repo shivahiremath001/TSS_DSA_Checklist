@@ -10,7 +10,7 @@ import AboutModal from "../components/modals/AboutModal";
 import LeetcodeVerifyModal from "../components/modals/LeetcodeVerifyModal";
 
 export default function DashboardPage() {
-  const { user, passwordHash, setLeetcodeUsername } = useUser();
+  const { user, passwordHash, setLeetcodeUsername, logout } = useUser();
   const isDemo = passwordHash === "__demo__";
   const [activeWeek, setActiveWeek] = useState<number>(1);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -132,7 +132,7 @@ export default function DashboardPage() {
             setLeetcodeUsername(newUsername);
           }
         }}
-        onCancel={() => setShowLeetcodeVerify(false)}
+        onCancel={() => logout()}
       />
     </div>
   );
