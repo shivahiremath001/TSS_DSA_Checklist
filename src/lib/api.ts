@@ -114,7 +114,9 @@ export async function apiChangePassword(payload: {
 export async function apiUpdateProfile(payload: {
   usn: string;
   password: string; // SHA-256 hashed
-  leetcodeUsername: string;
+  leetcodeUsername?: string;
+  firstName?: string;
+  lastName?: string;
 }): Promise<{ success: boolean; message: string }> {
   return post({ action: "updateProfile", ...payload });
 }

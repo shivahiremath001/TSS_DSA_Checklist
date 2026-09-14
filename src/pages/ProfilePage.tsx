@@ -10,6 +10,7 @@ export default function ProfilePage() {
   const [reason, setReason] = useState("");
   const [fieldsToChange, setFieldsToChange] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showClearanceForm, setShowClearanceForm] = useState(false);
   const isDemo = passwordHash === "__demo__";
 
   const mono: React.CSSProperties = { fontFamily: "'Share Tech Mono', monospace" };
@@ -128,62 +129,83 @@ export default function ProfilePage() {
         </div>
 
         {/* Edit Request */}
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", padding: "1.5rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
-            <div style={{ width: "6px", height: "6px", background: "var(--gold)", borderRadius: "50%", boxShadow: "0 0 8px var(--gold)" }} />
-            <h2 style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: "0.85rem", color: "var(--fg)", letterSpacing: "0.08em" }}>
-              REQUEST EDIT CLEARANCE
-            </h2>
-          </div>
-          <p style={{ ...mono, fontSize: "0.7rem", color: "var(--fg-muted)", marginBottom: "1.25rem", lineHeight: 1.7, letterSpacing: "0.04em" }}>
-            ◈ Direct profile edits are locked to protect mission integrity.<br />
-            Submit a clearance request to the Admin — include what you want changed and why.
-          </p>
-
-          <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            <div>
-              <label htmlFor="req-fields" style={{ ...mono, fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--fg-muted)", display: "block", marginBottom: "0.5rem" }}>
-                ◈ What do you want to change?
-              </label>
-              <input
-                id="req-fields"
-                type="text"
-                value={fieldsToChange}
-                onChange={e => setFieldsToChange(e.target.value)}
-                placeholder="e.g. My LeetCode username"
-                className="input-field"
-              />
-            </div>
-            <div>
-              <label htmlFor="req-reason" style={{ ...mono, fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--fg-muted)", display: "block", marginBottom: "0.5rem" }}>
-                ◈ Reason / justification
-              </label>
-              <textarea
-                id="req-reason"
-                value={reason}
-                onChange={e => setReason(e.target.value)}
-                placeholder="e.g. I made a typo when registering..."
-                className="input-field"
-                rows={3}
-                style={{ resize: "vertical" }}
-              />
-            </div>
-            {isDemo && (
-              <p style={{ ...mono, fontSize: "0.7rem", color: "var(--fg-muted)" }}>
-                Edit requests are disabled in simulation mode.
-              </p>
-            )}
+        {!showClearanceForm ? (
+          <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
             <button
-              type="submit"
-              id="profile-save-btn"
-              disabled={saving || !reason.trim() || !fieldsToChange.trim()}
-              className="btn-primary"
-              style={{ width: "100%", marginTop: "0.25rem" }}
+              onClick={() => setShowClearanceForm(true)}
+              style={{ ...mono, fontSize: "0.75rem", background: "none", border: "1px dashed var(--border)", color: "var(--fg-muted)", cursor: "pointer", padding: "1rem 2rem", textTransform: "uppercase", letterSpacing: "0.1em", transition: "all 100ms", width: "100%" }}
+              onMouseEnter={e => e.currentTarget.style.color = "var(--fg)"}
+              onMouseLeave={e => e.currentTarget.style.color = "var(--fg-muted)"}
             >
-              {saving ? "TRANSMITTING..." : "TRANSMIT REQUEST →"}
+              Need to change First Name, Last Name, Email, or LeetCode? Request Clearance
             </button>
-          </form>
-        </div>
+          </div>
+        ) : (
+          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", padding: "1.5rem", marginTop: "1.5rem" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                <div style={{ width: "6px", height: "6px", background: "var(--gold)", borderRadius: "50%", boxShadow: "0 0 8px var(--gold)" }} />
+                <h2 style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: "0.85rem", color: "var(--fg)", letterSpacing: "0.08em" }}>
+                  REQUEST EDIT CLEARANCE
+                </h2>
+              </div>
+              <button 
+                onClick={() => setShowClearanceForm(false)} 
+                style={{ background: "none", border: "none", color: "var(--fg-muted)", cursor: "pointer", fontSize: "1.2rem", lineHeight: 1 }}
+              >
+                ×
+              </button>
+            </div>
+            <p style={{ ...mono, fontSize: "0.7rem", color: "var(--fg-muted)", marginBottom: "1.25rem", lineHeight: 1.7, letterSpacing: "0.04em" }}>
+              ◈ Some fields are locked to protect mission integrity.<br />
+              Submit a clearance request to the Admin for other changes — include what you want changed and why.
+            </p>
+  
+            <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div>
+                <label htmlFor="req-fields" style={{ ...mono, fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--fg-muted)", display: "block", marginBottom: "0.5rem" }}>
+                  ◈ What do you want to change?
+                </label>
+                <input
+                  id="req-fields"
+                  type="text"
+                  value={fieldsToChange}
+                  onChange={e => setFieldsToChange(e.target.value)}
+                  placeholder="e.g. My LeetCode username"
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label htmlFor="req-reason" style={{ ...mono, fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--fg-muted)", display: "block", marginBottom: "0.5rem" }}>
+                  ◈ Reason / justification
+                </label>
+                <textarea
+                  id="req-reason"
+                  value={reason}
+                  onChange={e => setReason(e.target.value)}
+                  placeholder="e.g. I made a typo when registering..."
+                  className="input-field"
+                  rows={3}
+                  style={{ resize: "vertical" }}
+                />
+              </div>
+              {isDemo && (
+                <p style={{ ...mono, fontSize: "0.7rem", color: "var(--fg-muted)" }}>
+                  Edit requests are disabled in simulation mode.
+                </p>
+              )}
+              <button
+                type="submit"
+                id="profile-save-btn"
+                disabled={saving || !reason.trim() || !fieldsToChange.trim()}
+                className="btn-primary"
+                style={{ width: "100%", marginTop: "0.25rem" }}
+              >
+                {saving ? "TRANSMITTING..." : "TRANSMIT REQUEST →"}
+              </button>
+            </form>
+          </div>
+        )}
 
         <div style={{ marginTop: "1.5rem" }}>
           <Link to="/dashboard" style={{ ...mono, fontSize: "0.75rem", color: "var(--fg-muted)", textTransform: "uppercase", letterSpacing: "0.1em", textDecoration: "underline" }}>

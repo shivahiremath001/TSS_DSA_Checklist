@@ -323,18 +323,14 @@ export default function AdminDashboardPage() {
                       </td>
                       <td style={{ ...cellPad }}>
                         <div style={{ display: "flex", gap: "0.75rem" }}>
-                          <button
-                            onClick={() => handleViewProgress(u)}
-                            style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "var(--fg)", cursor: "pointer", textDecoration: "underline", textTransform: "uppercase", letterSpacing: "0.05em" }}
-                          >
-                            View
-                          </button>
-                          <button
-                            onClick={() => handleRemoveUser(u.usn)}
-                            style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "#e05555", cursor: "pointer", textDecoration: "underline", textTransform: "uppercase", letterSpacing: "0.05em" }}
-                          >
-                            Remove
-                          </button>
+                          {u.usn !== "ADMIN" && (
+                            <button
+                              onClick={() => handleViewProgress(u)}
+                              style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "var(--fg)", cursor: "pointer", textDecoration: "underline", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                            >
+                              View
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -348,12 +344,25 @@ export default function AdminDashboardPage() {
         {/* ── User Progress Sub-view ─────────────────────────── */}
         {!loading && activeTab === "users" && selectedUser && (
           <div className="page-enter">
-            <button
-              onClick={() => setSelectedUser(null)}
-              style={{ ...mono, fontSize: "0.75rem", ...muted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", marginBottom: "1.5rem", textTransform: "uppercase", letterSpacing: "0.08em" }}
-            >
-              ← Back to Users
-            </button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+              <button
+                onClick={() => setSelectedUser(null)}
+                style={{ ...mono, fontSize: "0.75rem", ...muted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", textTransform: "uppercase", letterSpacing: "0.08em" }}
+              >
+                ← Back to Users
+              </button>
+              {selectedUser.usn !== "ADMIN" && (
+                <button
+                  onClick={async () => {
+                    await handleRemoveUser(selectedUser.usn);
+                    setSelectedUser(null);
+                  }}
+                  style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "#e05555", cursor: "pointer", textDecoration: "underline", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                >
+                  Remove User
+                </button>
+              )}
+            </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "1.5rem", alignItems: "start", marginBottom: "2rem" }}>
               <div>

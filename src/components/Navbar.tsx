@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useUser } from "../context/UserContext";
 import ChangePasswordModal from "./modals/ChangePasswordModal";
 import SnakeGameModal from "./modals/SnakeGameModal";
@@ -12,6 +12,9 @@ export default function Navbar() {
   const [showSnakeGame, setShowSnakeGame] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
 
+  const clickCountRef = useRef<number>(0);
+  const lastClickTimeRef = useRef<number>(0);
+
   const isAdmin = user?.usn === "ADMIN";
 
   const navLinks = isAdmin
@@ -21,6 +24,22 @@ export default function Navbar() {
         { label: "Rankings", href: "/leaderboard" },
         { label: "Player", href: "/profile" },
       ];
+
+  const handleAdminClick = () => {
+    if (!isAdmin) return;
+    const now = Date.now();
+    if (now - lastClickTimeRef.current < 500) {
+      clickCountRef.current += 1;
+    } else {
+      clickCountRef.current = 1;
+    }
+    lastClickTimeRef.current = now;
+
+    if (clickCountRef.current >= 10) {
+      setShowChangePwd(true);
+      clickCountRef.current = 0;
+    }
+  };
 
   return (
     <>
@@ -145,12 +164,17 @@ export default function Navbar() {
           {/* ── Right side Actions ─────────────────────────────── */}
           <div className="order-2 md:order-3 flex items-center gap-2 md:gap-3">
             {user && (
-              <span className="hidden md:inline-block" style={{
-                fontFamily: "'Share Tech Mono', monospace",
-                fontSize: "0.75rem",
-                color: isAdmin ? "var(--gold)" : "var(--fg-muted)",
-                textShadow: isAdmin ? "0 0 8px var(--gold)" : "none",
-                letterSpacing: "0.06em",
+              <span 
+                className="hidden md:inline-block" 
+                onClick={handleAdminClick}
+                style={{
+                  fontFamily: "'Share Tech Mono', monospace",
+                  fontSize: "0.75rem",
+                  color: isAdmin ? "var(--gold)" : "var(--fg-muted)",
+                  textShadow: isAdmin ? "0 0 8px var(--gold)" : "none",
+                  letterSpacing: "0.06em",
+                  cursor: "default",
+                  userSelect: "none"
               }}>
                 {isAdmin ? "⬡ ADMIN" : `◈ ${user.usn}`}
               </span>
