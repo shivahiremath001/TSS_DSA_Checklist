@@ -137,7 +137,7 @@ export default function ProfilePage() {
               onMouseEnter={e => e.currentTarget.style.color = "var(--fg)"}
               onMouseLeave={e => e.currentTarget.style.color = "var(--fg-muted)"}
             >
-              Need to change First Name, Last Name, Email, or LeetCode? Request Clearance
+              Need to change First Name, Last Name, Email, or LeetCode? Request Edit
             </button>
           </div>
         ) : (
@@ -146,7 +146,7 @@ export default function ProfilePage() {
               <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                 <div style={{ width: "6px", height: "6px", background: "var(--gold)", borderRadius: "50%", boxShadow: "0 0 8px var(--gold)" }} />
                 <h2 style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: "0.85rem", color: "var(--fg)", letterSpacing: "0.08em" }}>
-                  REQUEST EDIT CLEARANCE
+                  REQUEST EDIT
                 </h2>
               </div>
               <button 
@@ -158,7 +158,7 @@ export default function ProfilePage() {
             </div>
             <p style={{ ...mono, fontSize: "0.7rem", color: "var(--fg-muted)", marginBottom: "1.25rem", lineHeight: 1.7, letterSpacing: "0.04em" }}>
               ◈ Some fields are locked to protect mission integrity.<br />
-              Submit a clearance request to the Admin for other changes — include what you want changed and why.
+              Submit an edit request to the Admin for changes — include what you want changed and why.
             </p>
   
             <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
