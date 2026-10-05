@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { PROBLEMS } from "../data/problems";
 import ProblemCard from "./ProblemCard";
 import { useUser } from "../context/UserContext";
@@ -17,16 +17,39 @@ const colLabel: React.CSSProperties = {
 
 export default function ProblemList({ activeWeek }: ProblemListProps) {
   const { solvedArray } = useUser();
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const filtered = useMemo(
-    () => PROBLEMS.filter((p) => p.week === activeWeek),
-    [activeWeek]
-  );
+  const filtered = useMemo(() => {
+    let list = PROBLEMS;
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.lcNumber.toString().includes(q)
+      );
+    } else {
+      list = list.filter((p) => p.week === activeWeek);
+    }
+    return list;
+  }, [activeWeek, searchQuery]);
 
   const solvedInView = filtered.filter((p) => solvedArray[p.id - 1]).length;
 
   return (
     <div>
+      {/* Search Bar */}
+      <div style={{ marginBottom: "1.5rem" }}>
+        <input
+          type="text"
+          placeholder="Search by problem name or LeetCode number..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="input-field"
+          style={{ width: "100%", background: "var(--bg)", border: "1px solid var(--border)", padding: "0.75rem 1rem", color: "var(--fg)", fontFamily: "'Share Tech Mono', monospace" }}
+        />
+      </div>
+
       {/* Column headers */}
       <div
         className="flex items-center gap-3"
