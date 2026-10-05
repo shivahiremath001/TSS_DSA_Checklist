@@ -5,14 +5,24 @@ import WeekFilter from "../components/WeekFilter";
 import ProblemList from "../components/ProblemList";
 import { useUser } from "../context/UserContext";
 import { useEffect } from "react";
+import { PROBLEMS } from "../data/problems";
 import WelcomeModal from "../components/modals/WelcomeModal";
 import AboutModal from "../components/modals/AboutModal";
 import LeetcodeVerifyModal from "../components/modals/LeetcodeVerifyModal";
 
 export default function DashboardPage() {
-  const { user, passwordHash, setLeetcodeUsername, logout } = useUser();
+  const { user, passwordHash, setLeetcodeUsername, logout, solvedArray } = useUser();
   const isDemo = passwordHash === "__demo__";
-  const [activeWeek, setActiveWeek] = useState<number>(1);
+  
+  const [activeWeek, setActiveWeek] = useState<number>(() => {
+    for (let w = 1; w <= 30; w++) {
+      const weekProblems = PROBLEMS.filter(p => p.week === w);
+      if (weekProblems.length === 0) continue;
+      const allSolved = weekProblems.every(p => solvedArray[p.id - 1]);
+      if (!allSolved) return w;
+    }
+    return 30; // If all 30 weeks are completed, default to 30
+  });
   const [showWelcome, setShowWelcome] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [showLeetcodeVerify, setShowLeetcodeVerify] = useState(false);
