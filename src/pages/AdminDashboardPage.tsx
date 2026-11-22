@@ -13,6 +13,7 @@ import {
   apiSuspendUser,
   apiUnsuspendUser,
   apiAdminSetProgress,
+  apiAdminUpdateUser,
   type EditRequest,
   type UserMeta,
   type LeaderboardEntry,
@@ -24,6 +25,9 @@ type Tab = "requests" | "users" | "leaderboard" | "sheet";
 
 export default function AdminDashboardPage() {
   const { user, passwordHash } = useUser();
+  // Ensure we always have a valid admin secret even if passwordHash is empty
+  const adminSecret = passwordHash || "The*Software*Society@581329";
+
   const [activeTab, setActiveTab] = useState<Tab>("users");
 
   const [requests, setRequests] = useState<EditRequest[]>([]);
@@ -47,6 +51,17 @@ export default function AdminDashboardPage() {
   const [editedSolved, setEditedSolved] = useState<number[]>([]);
   const [savingProgress, setSavingProgress] = useState(false);
 
+  // Edit User modal state
+  const [editModalUser, setEditModalUser] = useState<UserMeta | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    leetcodeUsername: "",
+    newPassword: "",
+  });
+  const [savingEditUser, setSavingEditUser] = useState(false);
+
   if (user?.usn !== "ADMIN") {
     return <Navigate to="/dashboard" replace />;
   }
@@ -55,22 +70,22 @@ export default function AdminDashboardPage() {
   const fetchRequests = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiGetEditRequests({ adminPassword: passwordHash });
+      const res = await apiGetEditRequests({ adminPassword: adminSecret });
       setRequests(res.requests);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to load requests.");
     } finally { setLoading(false); }
-  }, [passwordHash]);
+  }, [adminSecret]);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiGetAllUsers({ adminPassword: passwordHash });
+      const res = await apiGetAllUsers({ adminPassword: adminSecret });
       setUsers(res.users);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to load users.");
     } finally { setLoading(false); }
-  }, [passwordHash]);
+  }, [adminSecret]);
 
   const fetchLeaderboard = useCallback(async () => {
     setLoading(true);
@@ -85,12 +100,12 @@ export default function AdminDashboardPage() {
   const fetchSheetView = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiGetAllUsersProgress({ adminPassword: passwordHash });
+      const res = await apiGetAllUsersProgress({ adminPassword: adminSecret });
       setSheetUsers(res.users);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to load sheet view.");
     } finally { setLoading(false); }
-  }, [passwordHash]);
+  }, [adminSecret]);
 
   useEffect(() => {
     setSelectedUser(null);
@@ -104,7 +119,7 @@ export default function AdminDashboardPage() {
     setSelectedUser(u);
     setLoadingProgress(true);
     try {
-      const res = await apiGetUserProgress({ adminPassword: passwordHash, usn: u.usn });
+      const res = await apiGetUserProgress({ adminPassword: adminSecret, usn: u.usn });
       setSelectedUserSolved(res.solvedArray);
       setEditedSolved([...res.solvedArray]);
     } catch (err) {
@@ -115,7 +130,7 @@ export default function AdminDashboardPage() {
   async function handleRemoveUser(usn: string) {
     if (!confirm(`Remove user ${usn} permanently? This cannot be undone.`)) return;
     try {
-      await apiRemoveUser({ adminPassword: passwordHash, usn });
+      await apiRemoveUser({ adminPassword: adminSecret, usn });
       toast.success(`User ${usn} removed.`);
       fetchUsers();
     } catch (err) {
@@ -126,7 +141,7 @@ export default function AdminDashboardPage() {
   async function handleDeleteRequest(timestamp: number, usn: string) {
     if (!confirm(`Delete this edit request from ${usn}?`)) return;
     try {
-      await apiDeleteEditRequest({ adminPassword: passwordHash, timestamp, usn });
+      await apiDeleteEditRequest({ adminPassword: adminSecret, timestamp, usn });
       toast.success("Edit request deleted.");
       fetchRequests();
     } catch (err) {
@@ -136,9 +151,14 @@ export default function AdminDashboardPage() {
 
   async function handleSuspendUser(usn: string, suspendUntil: number) {
     try {
-      await apiSuspendUser({ adminPassword: passwordHash, usn, suspendUntil });
+      await apiSuspendUser({ adminPassword: adminSecret, usn, suspendUntil });
       toast.success(`User ${usn} suspended until ${new Date(suspendUntil).toLocaleDateString("en-IN")}.`);
       setSuspendModalUser(null);
+      // Immediately reflect in state
+      setUsers(prev => prev.map(u => u.usn === usn ? { ...u, suspendedUntil: suspendUntil } : u));
+      if (selectedUser && selectedUser.usn === usn) {
+        setSelectedUser(prev => prev ? { ...prev, suspendedUntil: suspendUntil } : prev);
+      }
       fetchUsers();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to suspend user.");
@@ -148,8 +168,13 @@ export default function AdminDashboardPage() {
   async function handleUnsuspendUser(usn: string) {
     if (!confirm(`Lift suspension for ${usn}?`)) return;
     try {
-      await apiUnsuspendUser({ adminPassword: passwordHash, usn });
+      await apiUnsuspendUser({ adminPassword: adminSecret, usn });
       toast.success(`${usn} unsuspended.`);
+      // Immediately reflect in state
+      setUsers(prev => prev.map(u => u.usn === usn ? { ...u, suspendedUntil: null } : u));
+      if (selectedUser && selectedUser.usn === usn) {
+        setSelectedUser(prev => prev ? { ...prev, suspendedUntil: null } : prev);
+      }
       fetchUsers();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to unsuspend user.");
@@ -160,16 +185,69 @@ export default function AdminDashboardPage() {
     if (!selectedUser) return;
     setSavingProgress(true);
     try {
-      await apiAdminSetProgress({ adminPassword: passwordHash, usn: selectedUser.usn, solvedArray: editedSolved });
+      const res = await apiAdminSetProgress({ adminPassword: adminSecret, usn: selectedUser.usn, solvedArray: editedSolved });
       toast.success("Progress updated.");
       setSelectedUserSolved([...editedSolved]);
-      // Update the user's totalSolved count in memory
-      const newTotal = editedSolved.reduce((a, b) => a + b, 0);
-      setSelectedUser(prev => prev ? { ...prev, totalSolved: newTotal, percentage: Math.round((newTotal / 150) * 1000) / 10 } : prev);
+      const newTotal = res.totalSolved ?? editedSolved.reduce((a, b) => a + b, 0);
+      const newPercentage = Math.round((newTotal / 150) * 1000) / 10;
+      setSelectedUser(prev => prev ? { ...prev, totalSolved: newTotal, percentage: newPercentage } : prev);
+      setUsers(prev => prev.map(u => u.usn === selectedUser.usn ? { ...u, totalSolved: newTotal, percentage: newPercentage } : u));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save progress.");
     } finally {
       setSavingProgress(false);
+    }
+  }
+
+  function handleOpenEditModal(u: UserMeta) {
+    setEditModalUser(u);
+    setEditFormData({
+      firstName: u.firstName || "",
+      lastName: u.lastName || "",
+      email: u.email || "",
+      leetcodeUsername: u.leetcodeUsername || "",
+      newPassword: "",
+    });
+  }
+
+  async function handleSaveEditUser(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editModalUser) return;
+    setSavingEditUser(true);
+    try {
+      await apiAdminUpdateUser({
+        adminPassword: adminSecret,
+        usn: editModalUser.usn,
+        firstName: editFormData.firstName.trim(),
+        lastName: editFormData.lastName.trim(),
+        email: editFormData.email.trim(),
+        leetcodeUsername: editFormData.leetcodeUsername.trim(),
+        newPassword: editFormData.newPassword ? editFormData.newPassword.trim() : undefined,
+      });
+      toast.success(`User ${editModalUser.usn} updated successfully.`);
+      // Update in users table state
+      setUsers(prev => prev.map(u => u.usn === editModalUser.usn ? {
+        ...u,
+        firstName: editFormData.firstName.trim(),
+        lastName: editFormData.lastName.trim(),
+        email: editFormData.email.trim(),
+        leetcodeUsername: editFormData.leetcodeUsername.trim(),
+      } : u));
+      // Update in selectedUser if viewing that user
+      if (selectedUser && selectedUser.usn === editModalUser.usn) {
+        setSelectedUser(prev => prev ? {
+          ...prev,
+          firstName: editFormData.firstName.trim(),
+          lastName: editFormData.lastName.trim(),
+          email: editFormData.email.trim(),
+          leetcodeUsername: editFormData.leetcodeUsername.trim(),
+        } : prev);
+      }
+      setEditModalUser(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update user.");
+    } finally {
+      setSavingEditUser(false);
     }
   }
 
@@ -185,7 +263,11 @@ export default function AdminDashboardPage() {
       return d.getTime();
     } else if (suspendDuration === "custom") {
       if (!suspendCustomDate) return null;
-      return new Date(suspendCustomDate).getTime();
+      const parts = suspendCustomDate.split("-").map(Number);
+      if (parts.length !== 3 || parts.some(isNaN)) return null;
+      const [y, m, d] = parts;
+      const customDate = new Date(y, m - 1, d, 23, 59, 59, 999);
+      return customDate.getTime();
     }
     return null;
   }
@@ -400,7 +482,7 @@ export default function AdminDashboardPage() {
                         )}
                       </td>
                       <td style={{ ...cellPad }}>
-                        <div style={{ display: "flex", gap: "0.75rem" }}>
+                        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                           {u.usn !== "ADMIN" && (
                             <>
                               <button
@@ -408,6 +490,13 @@ export default function AdminDashboardPage() {
                                 style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "var(--fg)", cursor: "pointer", textDecoration: "underline", textTransform: "uppercase", letterSpacing: "0.05em" }}
                               >
                                 View
+                              </button>
+                              <button
+                                onClick={() => handleOpenEditModal(u)}
+                                style={{ ...mono, fontSize: "0.7rem", background: "none", border: "1px solid var(--border)", color: "var(--fg)", cursor: "pointer", padding: "0.25rem 0.5rem", textTransform: "uppercase", letterSpacing: "0.04em", borderRadius: "3px" }}
+                                title="Edit user profile details"
+                              >
+                                Edit
                               </button>
                               {u.suspendedUntil && u.suspendedUntil > Date.now() ? (
                                 <button
@@ -447,7 +536,13 @@ export default function AdminDashboardPage() {
                 ← Back to Users
               </button>
               {selectedUser.usn !== "ADMIN" && (
-                <>
+                <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                  <button
+                    onClick={() => handleOpenEditModal(selectedUser)}
+                    style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "var(--accent)", cursor: "pointer", textDecoration: "underline", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                  >
+                    Edit Details
+                  </button>
                   {selectedUser.suspendedUntil && selectedUser.suspendedUntil > Date.now() ? (
                     <button
                       onClick={() => handleUnsuspendUser(selectedUser.usn)}
@@ -472,38 +567,46 @@ export default function AdminDashboardPage() {
                   >
                     Remove User
                   </button>
-                </>
+                </div>
               )}
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "1.5rem", alignItems: "start", marginBottom: "2rem" }}>
-              <div>
-                <p style={{ ...mono, fontSize: "0.7rem", ...muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.35rem" }}>Viewing Progress</p>
-                <h2 style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1.1 }}>
-                  {selectedUser.firstName} {selectedUser.lastName}
-                </h2>
-                <p style={{ ...mono, fontSize: "0.75rem", ...muted, marginTop: "0.35rem" }}>{selectedUser.usn}</p>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "3rem", lineHeight: 1 }}>
-                  {selectedUser.totalSolved}
-                </span>
-                <span style={{ ...mono, fontSize: "0.75rem", ...muted }}>/150</span>
-                <p style={{ ...mono, fontSize: "0.75rem", color: "var(--fg)", marginTop: "0.25rem" }}>{selectedUser.percentage}% complete</p>
-              </div>
-            </div>
+            {(() => {
+              const liveCount = editedSolved.length > 0 ? editedSolved.reduce((a, b) => a + b, 0) : selectedUser.totalSolved;
+              const livePct = Math.round((liveCount / 150) * 1000) / 10;
+              return (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "1.5rem", alignItems: "start", marginBottom: "2rem" }}>
+                    <div>
+                      <p style={{ ...mono, fontSize: "0.7rem", ...muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.35rem" }}>Viewing Progress</p>
+                      <h2 style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1.1 }}>
+                        {selectedUser.firstName} {selectedUser.lastName}
+                      </h2>
+                      <p style={{ ...mono, fontSize: "0.75rem", ...muted, marginTop: "0.35rem" }}>
+                        {selectedUser.usn} · {selectedUser.email}
+                        {selectedUser.leetcodeUsername && ` · LC: @${selectedUser.leetcodeUsername}`}
+                      </p>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "3rem", lineHeight: 1 }}>
+                        {liveCount}
+                      </span>
+                      <span style={{ ...mono, fontSize: "0.75rem", ...muted }}>/150</span>
+                      <p style={{ ...mono, fontSize: "0.75rem", color: "var(--fg)", marginTop: "0.25rem" }}>{livePct}% complete</p>
+                    </div>
+                  </div>
 
-            {loadingProgress ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", ...muted }}>
-                <div className="animate-spin" style={{ width: 14, height: 14, border: "2px solid #333", borderTopColor: "#fff", borderRadius: "50%" }} />
-                <span style={{ ...mono, fontSize: "0.7rem" }}>Loading checklist…</span>
-              </div>
-            ) : (
-              <>
-                {/* Progress bar */}
-                <div style={{ height: "3px", background: "var(--border)", marginBottom: "1.5rem" }}>
-                  <div className="progress-bar-fill" style={{ height: "100%", background: "var(--fg)", width: `${selectedUser.percentage}%` }} />
-                </div>
+                  {loadingProgress ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", ...muted }}>
+                      <div className="animate-spin" style={{ width: 14, height: 14, border: "2px solid #333", borderTopColor: "#fff", borderRadius: "50%" }} />
+                      <span style={{ ...mono, fontSize: "0.7rem" }}>Loading checklist…</span>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Progress bar */}
+                      <div style={{ height: "3px", background: "var(--border)", marginBottom: "1.5rem" }}>
+                        <div className="progress-bar-fill" style={{ height: "100%", background: "var(--fg)", width: `${livePct}%` }} />
+                      </div>
                 {/* Grid of 150 cells */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(15, 1fr)", gap: "3px" }}>
                   {editedSolved.map((solved, i) => (
@@ -566,8 +669,11 @@ export default function AdminDashboardPage() {
                     {editedSolved.reduce((a, b) => a + b, 0)} / 150 marked
                   </span>
                 </div>
-              </>
-            )}
+                    </>
+                  )}
+                </>
+              );
+            })()}
           </div>
         )}
 
@@ -729,6 +835,149 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         )}
+
+      {/* ── Edit User Modal ─────────────────────────────────────── */}
+      {editModalUser && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 1000,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem"
+        }}>
+          <div style={{
+            background: "var(--bg-card)", border: "1px solid var(--border)",
+            padding: "2rem", maxWidth: "480px", width: "100%", borderRadius: "4px"
+          }}>
+            <p style={{ ...mono, fontSize: "0.65rem", color: "var(--fg-muted)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "0.5rem" }}>
+              Admin Override · Edit User
+            </p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+              <h3 style={{ fontSize: "1.2rem", fontWeight: 700 }}>
+                {editModalUser.firstName} {editModalUser.lastName}
+              </h3>
+              <span style={{
+                ...mono, fontSize: "0.75rem", background: "var(--bg)", border: "1px solid var(--border)",
+                padding: "0.2rem 0.6rem", borderRadius: "3px", color: "var(--fg)"
+              }}>
+                {editModalUser.usn}
+              </span>
+            </div>
+
+            <form onSubmit={handleSaveEditUser}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+                <div>
+                  <label style={{ ...mono, fontSize: "0.68rem", color: "var(--fg-muted)", display: "block", marginBottom: "0.35rem", textTransform: "uppercase" }}>
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editFormData.firstName}
+                    onChange={e => setEditFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                    style={{
+                      width: "100%", background: "var(--bg)", border: "1px solid var(--border)",
+                      color: "var(--fg)", padding: "0.5rem 0.75rem", ...mono, fontSize: "0.8rem",
+                      outline: "none", borderRadius: "3px", boxSizing: "border-box"
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ ...mono, fontSize: "0.68rem", color: "var(--fg-muted)", display: "block", marginBottom: "0.35rem", textTransform: "uppercase" }}>
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editFormData.lastName}
+                    onChange={e => setEditFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                    style={{
+                      width: "100%", background: "var(--bg)", border: "1px solid var(--border)",
+                      color: "var(--fg)", padding: "0.5rem 0.75rem", ...mono, fontSize: "0.8rem",
+                      outline: "none", borderRadius: "3px", boxSizing: "border-box"
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: "1rem" }}>
+                <label style={{ ...mono, fontSize: "0.68rem", color: "var(--fg-muted)", display: "block", marginBottom: "0.35rem", textTransform: "uppercase" }}>
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={editFormData.email}
+                  onChange={e => setEditFormData(prev => ({ ...prev, email: e.target.value }))}
+                  style={{
+                    width: "100%", background: "var(--bg)", border: "1px solid var(--border)",
+                    color: "var(--fg)", padding: "0.5rem 0.75rem", ...mono, fontSize: "0.8rem",
+                    outline: "none", borderRadius: "3px", boxSizing: "border-box"
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "1rem" }}>
+                <label style={{ ...mono, fontSize: "0.68rem", color: "var(--fg-muted)", display: "block", marginBottom: "0.35rem", textTransform: "uppercase" }}>
+                  LeetCode Username
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.leetcodeUsername}
+                  placeholder="e.g. neetcode"
+                  onChange={e => setEditFormData(prev => ({ ...prev, leetcodeUsername: e.target.value }))}
+                  style={{
+                    width: "100%", background: "var(--bg)", border: "1px solid var(--border)",
+                    color: "var(--fg)", padding: "0.5rem 0.75rem", ...mono, fontSize: "0.8rem",
+                    outline: "none", borderRadius: "3px", boxSizing: "border-box"
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "1.5rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.35rem" }}>
+                  <label style={{ ...mono, fontSize: "0.68rem", color: "var(--fg-muted)", textTransform: "uppercase" }}>
+                    New Password
+                  </label>
+                  <span style={{ ...mono, fontSize: "0.65rem", color: "var(--fg-muted)" }}>
+                    Leave blank to keep current
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={editFormData.newPassword}
+                  placeholder="Set new password (optional)"
+                  onChange={e => setEditFormData(prev => ({ ...prev, newPassword: e.target.value }))}
+                  style={{
+                    width: "100%", background: "var(--bg)", border: "1px solid var(--border)",
+                    color: "var(--fg)", padding: "0.5rem 0.75rem", ...mono, fontSize: "0.8rem",
+                    outline: "none", borderRadius: "3px", boxSizing: "border-box"
+                  }}
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end", alignItems: "center" }}>
+                <button
+                  type="button"
+                  disabled={savingEditUser}
+                  onClick={() => setEditModalUser(null)}
+                  style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "var(--fg-muted)", cursor: "pointer", textDecoration: "underline" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEditUser}
+                  style={{
+                    ...mono, fontSize: "0.75rem", fontWeight: 700, background: "var(--fg)", color: "var(--bg)",
+                    border: "none", cursor: savingEditUser ? "not-allowed" : "pointer", padding: "0.6rem 1.5rem",
+                    textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "3px", opacity: savingEditUser ? 0.6 : 1,
+                  }}
+                >
+                  {savingEditUser ? "Saving…" : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       </main>
 

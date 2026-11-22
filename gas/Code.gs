@@ -64,6 +64,7 @@ function doPost(e) {
       case "suspendUser":    result = suspendUser(request);    break;
       case "unsuspendUser":  result = unsuspendUser(request);  break;
       case "adminSetProgress": result = adminSetProgress(request); break;
+      case "adminUpdateUser": result = adminUpdateUser(request); break;
       default:
         result = { success: false, message: "Unknown action: " + action };
     }
@@ -140,6 +141,30 @@ function doGet(e) {
 // ============================================================
 //  HELPERS
 // ============================================================
+
+var ADMIN_PASS = "The*Software*Society@581329";
+var SUSPEND_COL = 162;
+
+/** Validates admin password against plaintext and SHA-256 hash. */
+function checkAdminAuth(password) {
+  if (!password) return false;
+  var str = String(password).trim();
+  if (str === ADMIN_PASS) return true;
+  if (str.toLowerCase() === sha256Hex(ADMIN_PASS).toLowerCase()) return true;
+  return false;
+}
+
+/** Guarantees that column 162 exists and has header "SuspendedUntil". */
+function ensureSuspensionColumn(sheet) {
+  var maxCols = sheet.getMaxColumns();
+  if (maxCols < SUSPEND_COL) {
+    sheet.insertColumnsAfter(maxCols, SUSPEND_COL - maxCols);
+  }
+  var header = sheet.getRange(1, SUSPEND_COL).getValue();
+  if (!header || String(header).trim() === "") {
+    sheet.getRange(1, SUSPEND_COL).setValue("SuspendedUntil");
+  }
+}
 
 function getSheet(name) {
   return getSpreadsheet().getSheetByName(name);
@@ -655,7 +680,7 @@ function submitEditRequest(req) {
 //  Payload: adminPassword
 // ============================================================
 function getEditRequests(req) {
-  if (req.adminPassword !== "The*Software*Society@581329") return { success: false, message: "Unauthorized." };
+  if (!checkAdminAuth(req.adminPassword)) return { success: false, message: "Unauthorized." };
 
   var reqSheet = getSheet(EDIT_REQ_SHEET);
   if (!reqSheet) return { success: false, message: "EditRequests sheet not found." };
@@ -684,7 +709,7 @@ function getEditRequests(req) {
 //  Payload: adminPassword, timestamp, usn
 // ============================================================
 function deleteEditRequest(req) {
-  if (req.adminPassword !== "The*Software*Society@581329") return { success: false, message: "Unauthorized." };
+  if (!checkAdminAuth(req.adminPassword)) return { success: false, message: "Unauthorized." };
 
   var reqSheet = getSheet(EDIT_REQ_SHEET);
   if (!reqSheet) return { success: false, message: "EditRequests sheet not found." };
@@ -705,7 +730,7 @@ function deleteEditRequest(req) {
 //  Payload: adminPassword
 // ============================================================
 function getAllUsers(req) {
-  if (req.adminPassword !== "The*Software*Society@581329") return { success: false, message: "Unauthorized." };
+  if (!checkAdminAuth(req.adminPassword)) return { success: false, message: "Unauthorized." };
 
   var sheet = getSheet(USERS_SHEET);
   var data = sheet.getDataRange().getValues();
@@ -723,7 +748,7 @@ function getAllUsers(req) {
       leetcodeUsername: r[5],
       totalSolved: r[7],
       percentage: r[8],
-      suspendedUntil: r[161] ? Number(r[161]) : null
+      suspendedUntil: (r.length > 161 && r[161]) ? Number(r[161]) : null
     });
   }
 
@@ -735,7 +760,7 @@ function getAllUsers(req) {
 //  Payload: adminPassword, usn
 // ============================================================
 function getUserProgress(req) {
-  if (req.adminPassword !== "The*Software*Society@581329") return { success: false, message: "Unauthorized." };
+  if (!checkAdminAuth(req.adminPassword)) return { success: false, message: "Unauthorized." };
 
   var sheet = getSheet(USERS_SHEET);
   var rowIdx = findUserRow(sheet, req.usn);
@@ -756,7 +781,7 @@ function getUserProgress(req) {
 //  Payload: adminPassword, usn
 // ============================================================
 function removeUser(req) {
-  if (req.adminPassword !== "The*Software*Society@581329") return { success: false, message: "Unauthorized." };
+  if (!checkAdminAuth(req.adminPassword)) return { success: false, message: "Unauthorized." };
 
   var sheet = getSheet(USERS_SHEET);
   var rowIdx = findUserRow(sheet, req.usn);
@@ -765,6 +790,7 @@ function removeUser(req) {
   
   // Soft delete by setting column 161 (IsDeleted) to 1
   sheet.getRange(rowIdx, 161).setValue(1);
+  refreshLeaderboard();
   return { success: true, message: "User " + req.usn + " removed." };
 }
 
@@ -774,7 +800,7 @@ function removeUser(req) {
 //  Payload: adminPassword
 // ============================================================
 function getAllUsersProgress(req) {
-  if (req.adminPassword !== "The*Software*Society@581329") return { success: false, message: "Unauthorized." };
+  if (!checkAdminAuth(req.adminPassword)) return { success: false, message: "Unauthorized." };
 
   var sheet = getSheet(USERS_SHEET);
   var data = sheet.getDataRange().getValues();
@@ -808,13 +834,14 @@ function getAllUsersProgress(req) {
 //  Payload: adminPassword, usn, suspendUntil (epoch ms)
 // ============================================================
 function suspendUser(req) {
-  if (req.adminPassword !== "The*Software*Society@581329") return { success: false, message: "Unauthorized." };
+  if (!checkAdminAuth(req.adminPassword)) return { success: false, message: "Unauthorized." };
 
   var sheet = getSheet(USERS_SHEET);
   var rowIdx = findUserRow(sheet, req.usn);
   if (rowIdx === -1) return { success: false, message: "USN not found." };
 
-  sheet.getRange(rowIdx, 162).setValue(Number(req.suspendUntil));
+  ensureSuspensionColumn(sheet);
+  sheet.getRange(rowIdx, SUSPEND_COL).setValue(Number(req.suspendUntil));
   refreshLeaderboard(); // immediately remove from leaderboard
   return { success: true, message: "User " + req.usn + " suspended until " + new Date(Number(req.suspendUntil)).toISOString() };
 }
@@ -824,13 +851,14 @@ function suspendUser(req) {
 //  Payload: adminPassword, usn
 // ============================================================
 function unsuspendUser(req) {
-  if (req.adminPassword !== "The*Software*Society@581329") return { success: false, message: "Unauthorized." };
+  if (!checkAdminAuth(req.adminPassword)) return { success: false, message: "Unauthorized." };
 
   var sheet = getSheet(USERS_SHEET);
   var rowIdx = findUserRow(sheet, req.usn);
   if (rowIdx === -1) return { success: false, message: "USN not found." };
 
-  sheet.getRange(rowIdx, 162).clearContent();
+  ensureSuspensionColumn(sheet);
+  sheet.getRange(rowIdx, SUSPEND_COL).clearContent();
   refreshLeaderboard(); // immediately restore to leaderboard
   return { success: true, message: "User " + req.usn + " unsuspended." };
 }
@@ -840,23 +868,73 @@ function unsuspendUser(req) {
 //  Payload: adminPassword, usn, solvedArray (array of 0/1, length 150)
 // ============================================================
 function adminSetProgress(req) {
-  if (req.adminPassword !== "The*Software*Society@581329") return { success: false, message: "Unauthorized." };
+  if (!checkAdminAuth(req.adminPassword)) return { success: false, message: "Unauthorized." };
 
   var sheet = getSheet(USERS_SHEET);
   var rowIdx = findUserRow(sheet, req.usn);
   if (rowIdx === -1) return { success: false, message: "USN not found." };
 
   var arr = req.solvedArray;
-  if (!arr || arr.length !== TOTAL_PROBLEMS) return { success: false, message: "Invalid solvedArray length." };
+  if (!arr || !Array.isArray(arr) || arr.length !== TOTAL_PROBLEMS) {
+    return { success: false, message: "Invalid solvedArray length. Expected 150 items." };
+  }
+
+  // Ensure sheet has enough columns for Q1..Q150 (cols 10 to 159)
+  var neededCols = Q_START_COL + TOTAL_PROBLEMS - 1;
+  var maxCols = sheet.getMaxColumns();
+  if (maxCols < neededCols) {
+    sheet.insertColumnsAfter(maxCols, neededCols - maxCols);
+  }
 
   // Write Q1-Q150 values
   var range = sheet.getRange(rowIdx, Q_START_COL, 1, TOTAL_PROBLEMS);
-  var values = [arr.map(function(v) { return v === 1 ? 1 : 0; })];
+  var values = [arr.map(function(v) { return Number(v) === 1 ? 1 : 0; })];
   range.setValues(values);
 
+  // Compute and directly set totalSolved and percentage
+  var totalSolved = 0;
+  for (var i = 0; i < arr.length; i++) {
+    if (Number(arr[i]) === 1) totalSolved++;
+  }
+  var percentage = Math.round((totalSolved / TOTAL_PROBLEMS) * 1000) / 10;
+  sheet.getRange(rowIdx, 8).setValue(totalSolved);
+  sheet.getRange(rowIdx, 9).setValue(percentage);
+
   SpreadsheetApp.flush();
-  var totalSolved = sheet.getRange(rowIdx, 8).getValue();
   refreshLeaderboard();
 
-  return { success: true, totalSolved: totalSolved };
+  return { success: true, totalSolved: totalSolved, percentage: percentage };
+}
+
+// ============================================================
+//  ACTION: adminUpdateUser
+//  Payload: adminPassword, usn, firstName, lastName, email, leetcodeUsername, newPassword?
+// ============================================================
+function adminUpdateUser(req) {
+  if (!checkAdminAuth(req.adminPassword)) return { success: false, message: "Unauthorized." };
+
+  var sheet = getSheet(USERS_SHEET);
+  var rowIdx = findUserRow(sheet, req.usn);
+  if (rowIdx === -1) return { success: false, message: "USN not found." };
+
+  if (req.firstName !== undefined && req.firstName !== null) {
+    sheet.getRange(rowIdx, 2).setValue(String(req.firstName).trim());
+  }
+  if (req.lastName !== undefined && req.lastName !== null) {
+    sheet.getRange(rowIdx, 3).setValue(String(req.lastName).trim());
+  }
+  if (req.email !== undefined && req.email !== null) {
+    sheet.getRange(rowIdx, 5).setValue(String(req.email).trim().toLowerCase());
+  }
+  if (req.leetcodeUsername !== undefined && req.leetcodeUsername !== null) {
+    sheet.getRange(rowIdx, 6).setValue(String(req.leetcodeUsername).trim());
+  }
+  if (req.newPassword && String(req.newPassword).trim() !== "") {
+    sheet.getRange(rowIdx, 7).setValue(sha256Hex(String(req.newPassword).trim()));
+  }
+
+  SpreadsheetApp.flush();
+  refreshLeaderboard();
+
+  return { success: true, message: "User details updated successfully." };
 }

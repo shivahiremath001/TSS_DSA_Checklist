@@ -222,3 +222,15 @@ export async function apiAdminSetProgress(payload: {
 }): Promise<{ success: boolean; totalSolved: number }> {
   return post({ action: "adminSetProgress", ...payload });
 }
+
+export async function apiAdminUpdateUser(payload: {
+  adminPassword: string;
+  usn: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  leetcodeUsername?: string;
+  newPassword?: string;
+}): Promise<{ success: boolean; message: string }> {
+  return post({ action: "adminUpdateUser", ...payload });
+}
