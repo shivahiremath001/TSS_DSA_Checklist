@@ -38,6 +38,7 @@ export interface UserMeta {
   leetcodeUsername: string;
   totalSolved: number;
   percentage: number;
+  suspendedUntil?: number | null; // epoch ms, null = not suspended
 }
 
 export interface LoginResponse {
@@ -197,4 +198,27 @@ export async function apiGetAllUsersProgress(payload: {
   adminPassword: string;
 }): Promise<{ success: boolean; users: UserWithProgress[] }> {
   return post({ action: "getAllUsersProgress", ...payload });
+}
+
+export async function apiSuspendUser(payload: {
+  adminPassword: string;
+  usn: string;
+  suspendUntil: number; // epoch ms
+}): Promise<{ success: boolean; message: string }> {
+  return post({ action: "suspendUser", ...payload });
+}
+
+export async function apiUnsuspendUser(payload: {
+  adminPassword: string;
+  usn: string;
+}): Promise<{ success: boolean; message: string }> {
+  return post({ action: "unsuspendUser", ...payload });
+}
+
+export async function apiAdminSetProgress(payload: {
+  adminPassword: string;
+  usn: string;
+  solvedArray: number[]; // 0 or 1, length 150
+}): Promise<{ success: boolean; totalSolved: number }> {
+  return post({ action: "adminSetProgress", ...payload });
 }

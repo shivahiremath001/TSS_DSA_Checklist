@@ -10,6 +10,9 @@ import {
   apiRemoveUser,
   apiGetLeaderboard,
   apiGetAllUsersProgress,
+  apiSuspendUser,
+  apiUnsuspendUser,
+  apiAdminSetProgress,
   type EditRequest,
   type UserMeta,
   type LeaderboardEntry,
@@ -35,6 +38,14 @@ export default function AdminDashboardPage() {
   const [selectedUser, setSelectedUser] = useState<UserMeta | null>(null);
   const [selectedUserSolved, setSelectedUserSolved] = useState<number[]>([]);
   const [loadingProgress, setLoadingProgress] = useState(false);
+
+  // Suspend modal state
+  const [suspendModalUser, setSuspendModalUser] = useState<UserMeta | null>(null);
+  const [suspendDuration, setSuspendDuration] = useState<"7d" | "14d" | "1m" | "custom">("7d");
+  const [suspendCustomDate, setSuspendCustomDate] = useState("");
+  // Editable progress state
+  const [editedSolved, setEditedSolved] = useState<number[]>([]);
+  const [savingProgress, setSavingProgress] = useState(false);
 
   if (user?.usn !== "ADMIN") {
     return <Navigate to="/dashboard" replace />;
@@ -95,6 +106,7 @@ export default function AdminDashboardPage() {
     try {
       const res = await apiGetUserProgress({ adminPassword: passwordHash, usn: u.usn });
       setSelectedUserSolved(res.solvedArray);
+      setEditedSolved([...res.solvedArray]);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to load progress.");
     } finally { setLoadingProgress(false); }
@@ -120,6 +132,62 @@ export default function AdminDashboardPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete request.");
     }
+  }
+
+  async function handleSuspendUser(usn: string, suspendUntil: number) {
+    try {
+      await apiSuspendUser({ adminPassword: passwordHash, usn, suspendUntil });
+      toast.success(`User ${usn} suspended until ${new Date(suspendUntil).toLocaleDateString("en-IN")}.`);
+      setSuspendModalUser(null);
+      fetchUsers();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to suspend user.");
+    }
+  }
+
+  async function handleUnsuspendUser(usn: string) {
+    if (!confirm(`Lift suspension for ${usn}?`)) return;
+    try {
+      await apiUnsuspendUser({ adminPassword: passwordHash, usn });
+      toast.success(`${usn} unsuspended.`);
+      fetchUsers();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to unsuspend user.");
+    }
+  }
+
+  async function handleSaveProgress() {
+    if (!selectedUser) return;
+    setSavingProgress(true);
+    try {
+      await apiAdminSetProgress({ adminPassword: passwordHash, usn: selectedUser.usn, solvedArray: editedSolved });
+      toast.success("Progress updated.");
+      setSelectedUserSolved([...editedSolved]);
+      // Update the user's totalSolved count in memory
+      const newTotal = editedSolved.reduce((a, b) => a + b, 0);
+      setSelectedUser(prev => prev ? { ...prev, totalSolved: newTotal, percentage: Math.round((newTotal / 150) * 1000) / 10 } : prev);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save progress.");
+    } finally {
+      setSavingProgress(false);
+    }
+  }
+
+  function computeSuspendUntil(): number | null {
+    const now = new Date();
+    if (suspendDuration === "7d") {
+      return now.getTime() + 7 * 24 * 60 * 60 * 1000;
+    } else if (suspendDuration === "14d") {
+      return now.getTime() + 14 * 24 * 60 * 60 * 1000;
+    } else if (suspendDuration === "1m") {
+      const d = new Date(now);
+      d.setMonth(d.getMonth() + 1);
+      return d.getTime();
+    } else if (suspendDuration === "custom") {
+      if (!suspendCustomDate) return null;
+      return new Date(suspendCustomDate).getTime();
+    }
+    return null;
   }
 
   // ── Shared styles ────────────────────────────────────────────
@@ -285,7 +353,7 @@ export default function AdminDashboardPage() {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.825rem" }}>
                 <thead>
                   <tr style={{ background: "var(--bg-card)" }}>
-                    {["#", "USN", "Name", "Email", "LeetCode", "Solved", "Actions"].map(h => (
+                    {["#", "USN", "Name", "Email", "LeetCode", "Solved", "Status", "Actions"].map(h => (
                       <th key={h} style={{ ...cellPad, ...mono, fontSize: "0.7rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", ...muted, textAlign: "left", borderBottom: "1px solid var(--border)", whiteSpace: "nowrap" }}>
                         {h}
                       </th>
@@ -322,14 +390,41 @@ export default function AdminDashboardPage() {
                         </div>
                       </td>
                       <td style={{ ...cellPad }}>
+                        {u.suspendedUntil && u.suspendedUntil > Date.now() ? (
+                          <span style={{ ...mono, fontSize: "0.65rem", color: "#e05555", fontWeight: 700 }}>
+                            SUSPENDED<br/>
+                            <span style={{ fontWeight: 400, color: "var(--fg-muted)" }}>until {new Date(u.suspendedUntil).toLocaleDateString("en-IN")}</span>
+                          </span>
+                        ) : (
+                          <span style={{ ...mono, fontSize: "0.65rem", color: "#4caf50" }}>ACTIVE</span>
+                        )}
+                      </td>
+                      <td style={{ ...cellPad }}>
                         <div style={{ display: "flex", gap: "0.75rem" }}>
                           {u.usn !== "ADMIN" && (
-                            <button
-                              onClick={() => handleViewProgress(u)}
-                              style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "var(--fg)", cursor: "pointer", textDecoration: "underline", textTransform: "uppercase", letterSpacing: "0.05em" }}
-                            >
-                              View
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleViewProgress(u)}
+                                style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "var(--fg)", cursor: "pointer", textDecoration: "underline", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                              >
+                                View
+                              </button>
+                              {u.suspendedUntil && u.suspendedUntil > Date.now() ? (
+                                <button
+                                  onClick={() => handleUnsuspendUser(u.usn)}
+                                  style={{ ...mono, fontSize: "0.7rem", background: "none", border: "1px solid #4caf50", color: "#4caf50", cursor: "pointer", padding: "0.25rem 0.5rem", textTransform: "uppercase", letterSpacing: "0.04em", borderRadius: "3px" }}
+                                >
+                                  Unsuspend
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => { setSuspendModalUser(u); setSuspendDuration("7d"); setSuspendCustomDate(""); }}
+                                  style={{ ...mono, fontSize: "0.7rem", background: "none", border: "1px solid #e05555", color: "#e05555", cursor: "pointer", padding: "0.25rem 0.5rem", textTransform: "uppercase", letterSpacing: "0.04em", borderRadius: "3px" }}
+                                >
+                                  Suspend
+                                </button>
+                              )}
+                            </>
                           )}
                         </div>
                       </td>
@@ -352,15 +447,32 @@ export default function AdminDashboardPage() {
                 ← Back to Users
               </button>
               {selectedUser.usn !== "ADMIN" && (
-                <button
-                  onClick={async () => {
-                    await handleRemoveUser(selectedUser.usn);
-                    setSelectedUser(null);
-                  }}
-                  style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "#e05555", cursor: "pointer", textDecoration: "underline", textTransform: "uppercase", letterSpacing: "0.05em" }}
-                >
-                  Remove User
-                </button>
+                <>
+                  {selectedUser.suspendedUntil && selectedUser.suspendedUntil > Date.now() ? (
+                    <button
+                      onClick={() => handleUnsuspendUser(selectedUser.usn)}
+                      style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "#4caf50", cursor: "pointer", textDecoration: "underline", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                    >
+                      Unsuspend
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { setSuspendModalUser(selectedUser); setSuspendDuration("7d"); setSuspendCustomDate(""); }}
+                      style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "#e09b30", cursor: "pointer", textDecoration: "underline", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                    >
+                      Suspend
+                    </button>
+                  )}
+                  <button
+                    onClick={async () => {
+                      await handleRemoveUser(selectedUser.usn);
+                      setSelectedUser(null);
+                    }}
+                    style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "#e05555", cursor: "pointer", textDecoration: "underline", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                  >
+                    Remove User
+                  </button>
+                </>
               )}
             </div>
 
@@ -394,10 +506,15 @@ export default function AdminDashboardPage() {
                 </div>
                 {/* Grid of 150 cells */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(15, 1fr)", gap: "3px" }}>
-                  {selectedUserSolved.map((solved, i) => (
+                  {editedSolved.map((solved, i) => (
                     <div
                       key={i}
-                      title={`Q${i + 1} — ${solved ? "Solved ✓" : "Not solved"}`}
+                      title={`Q${i + 1} — ${solved ? "Solved ✓ (click to unmark)" : "Not solved (click to mark)"}`}
+                      onClick={() => {
+                        const updated = [...editedSolved];
+                        updated[i] = updated[i] === 1 ? 0 : 1;
+                        setEditedSolved(updated);
+                      }}
                       style={{
                         aspectRatio: "1/1",
                         background: solved ? "#fff" : "var(--bg-card)",
@@ -409,8 +526,8 @@ export default function AdminDashboardPage() {
                         color: solved ? "#000" : "#333",
                         fontFamily: "'JetBrains Mono', monospace",
                         fontWeight: 700,
-                        cursor: "default",
-                        transition: "opacity 200ms",
+                        cursor: "pointer",
+                        transition: "opacity 200ms, background 100ms",
                         opacity: solved ? 1 : 0.5,
                       }}
                     >
@@ -419,8 +536,36 @@ export default function AdminDashboardPage() {
                   ))}
                 </div>
                 <p style={{ marginTop: "1rem", ...mono, fontSize: "0.7rem", ...muted }}>
-                  Each cell = one of the 150 problems. White = solved.
+                  Each cell = one of the 150 problems. White = solved. Click any cell to toggle.
                 </p>
+                <div style={{ marginTop: "1.25rem", display: "flex", alignItems: "center", gap: "1rem" }}>
+                  <button
+                    onClick={handleSaveProgress}
+                    disabled={savingProgress}
+                    style={{
+                      ...mono, fontSize: "0.75rem", fontWeight: 700,
+                      background: "var(--fg)", color: "var(--bg)",
+                      border: "none", cursor: savingProgress ? "not-allowed" : "pointer",
+                      padding: "0.6rem 1.5rem", textTransform: "uppercase",
+                      letterSpacing: "0.08em", borderRadius: "3px", opacity: savingProgress ? 0.6 : 1,
+                    }}
+                  >
+                    {savingProgress ? "Saving…" : "Save Changes"}
+                  </button>
+                  <button
+                    onClick={() => setEditedSolved([...selectedUserSolved])}
+                    disabled={savingProgress}
+                    style={{
+                      ...mono, fontSize: "0.75rem", background: "none", border: "none",
+                      color: "var(--fg-muted)", cursor: "pointer", textDecoration: "underline"
+                    }}
+                  >
+                    Reset
+                  </button>
+                  <span style={{ ...mono, fontSize: "0.7rem", color: "var(--fg-muted)" }}>
+                    {editedSolved.reduce((a, b) => a + b, 0)} / 150 marked
+                  </span>
+                </div>
               </>
             )}
           </div>
@@ -586,6 +731,97 @@ export default function AdminDashboardPage() {
         )}
 
       </main>
+
+      {/* ── Suspend Modal ──────────────────────────────────────── */}
+      {suspendModalUser && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 1000,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem"
+        }}>
+          <div style={{
+            background: "var(--bg-card)", border: "1px solid var(--border)",
+            padding: "2rem", maxWidth: "420px", width: "100%", borderRadius: "4px"
+          }}>
+            <p style={{ ...mono, fontSize: "0.65rem", color: "var(--fg-muted)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "0.5rem" }}>Suspend Account</p>
+            <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "1.5rem" }}>
+              {suspendModalUser.firstName} {suspendModalUser.lastName}
+              <span style={{ ...mono, fontSize: "0.75rem", color: "var(--fg-muted)", marginLeft: "0.5rem" }}>{suspendModalUser.usn}</span>
+            </h3>
+
+            <p style={{ ...mono, fontSize: "0.7rem", color: "var(--fg-muted)", marginBottom: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>Suspension Duration</p>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "1rem" }}>
+              {(["7d", "14d", "1m", "custom"] as const).map(opt => (
+                <button
+                  key={opt}
+                  onClick={() => setSuspendDuration(opt)}
+                  style={{
+                    ...mono, fontSize: "0.75rem", padding: "0.6rem 1rem",
+                    background: suspendDuration === opt ? "var(--fg)" : "transparent",
+                    color: suspendDuration === opt ? "var(--bg)" : "var(--fg)",
+                    border: `1px solid ${suspendDuration === opt ? "var(--fg)" : "var(--border)"}`,
+                    cursor: "pointer", fontWeight: 700, borderRadius: "3px",
+                    textTransform: "uppercase", letterSpacing: "0.06em",
+                    transition: "all 120ms ease",
+                  }}
+                >
+                  {opt === "7d" ? "7 Days" : opt === "14d" ? "14 Days" : opt === "1m" ? "1 Month" : "Custom"}
+                </button>
+              ))}
+            </div>
+
+            {suspendDuration === "custom" && (
+              <div style={{ marginBottom: "1rem" }}>
+                <label style={{ ...mono, fontSize: "0.7rem", color: "var(--fg-muted)", display: "block", marginBottom: "0.4rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>End Date</label>
+                <input
+                  type="date"
+                  value={suspendCustomDate}
+                  min={new Date().toISOString().split("T")[0]}
+                  onChange={e => setSuspendCustomDate(e.target.value)}
+                  style={{
+                    width: "100%", background: "var(--bg)", border: "1px solid var(--border)",
+                    color: "var(--fg)", padding: "0.5rem 0.75rem", ...mono, fontSize: "0.8rem",
+                    outline: "none", borderRadius: "3px", boxSizing: "border-box"
+                  }}
+                />
+              </div>
+            )}
+
+            {(() => {
+              const until = computeSuspendUntil();
+              return until ? (
+                <p style={{ ...mono, fontSize: "0.72rem", color: "var(--fg-muted)", marginBottom: "1.25rem" }}>
+                  Suspended until: <strong style={{ color: "#e05555" }}>{new Date(until).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</strong>
+                </p>
+              ) : null;
+            })()}
+
+            <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setSuspendModalUser(null)}
+                style={{ ...mono, fontSize: "0.75rem", background: "none", border: "none", color: "var(--fg-muted)", cursor: "pointer", textDecoration: "underline" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const until = computeSuspendUntil();
+                  if (!until) { toast.error("Please select a valid end date."); return; }
+                  if (until <= Date.now()) { toast.error("Suspension end date must be in the future."); return; }
+                  handleSuspendUser(suspendModalUser.usn, until);
+                }}
+                style={{
+                  ...mono, fontSize: "0.75rem", fontWeight: 700, background: "#e05555", color: "#fff",
+                  border: "none", cursor: "pointer", padding: "0.6rem 1.5rem",
+                  textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "3px",
+                }}
+              >
+                Confirm Suspend
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

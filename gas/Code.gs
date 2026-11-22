@@ -61,6 +61,9 @@ function doPost(e) {
       case "getUserProgress": result = getUserProgress(request); break;
       case "removeUser":     result = removeUser(request); break;
       case "getAllUsersProgress": result = getAllUsersProgress(request); break;
+      case "suspendUser":    result = suspendUser(request);    break;
+      case "unsuspendUser":  result = unsuspendUser(request);  break;
+      case "adminSetProgress": result = adminSetProgress(request); break;
       default:
         result = { success: false, message: "Unknown action: " + action };
     }
@@ -99,6 +102,7 @@ function setupSheets() {
   for (var i = 1; i <= TOTAL_PROBLEMS; i++) userHeaders.push("Q" + i);
   userHeaders.push("LastResetTimestamp");
   userHeaders.push("IsDeleted");
+  userHeaders.push("SuspendedUntil");
   setHeaders(usersSheet, userHeaders);
 
   // Add ADMIN row only if sheet is empty (just the header)
@@ -382,6 +386,16 @@ function login(req) {
     return { success: false, message: "Account has been removed." };
   }
 
+  // Check suspension
+  var suspendedUntil = row[161]; // col 162
+  if (suspendedUntil) {
+    var suspendTs = Number(suspendedUntil);
+    if (suspendTs > new Date().getTime()) {
+      var suspendDate = new Date(suspendTs).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+      return { success: false, message: "Your account is suspended until " + suspendDate + ". Contact admin if you believe this is a mistake." };
+    }
+  }
+
   // Build solved array (Q1-Q150 = columns index 9..158)
   var solvedArray = [];
   for (var q = 0; q < TOTAL_PROBLEMS; q++) {
@@ -451,7 +465,8 @@ function refreshLeaderboard() {
   var entries = [];
   for (var i = 1; i < data.length; i++) {
     var r = data[i];
-    if (!r[3] || String(r[3]).toUpperCase() === "ADMIN" || r[160] === 1 || r[160] === true) continue;
+    var isSuspended = r[161] && Number(r[161]) > new Date().getTime();
+    if (!r[3] || String(r[3]).toUpperCase() === "ADMIN" || r[160] === 1 || r[160] === true || isSuspended) continue;
     entries.push({
       firstName:        String(r[1]),
       lastName:         String(r[2]),
@@ -495,7 +510,7 @@ function getLeaderboard() {
   var rows = [];
   for (var i = 1; i < data.length; i++) {
     var r = data[i];
-    if (!r[2] || r[160] === 1 || r[160] === true) continue; // skip empty USN rows or deleted
+    if (!r[2]) continue; // skip empty USN rows (LB sheet has only 7 cols; deletions/suspensions are filtered during rebuild)
     rows.push({
       rank:             i,
       firstName:        r[0],
@@ -707,7 +722,8 @@ function getAllUsers(req) {
       email: r[4],
       leetcodeUsername: r[5],
       totalSolved: r[7],
-      percentage: r[8]
+      percentage: r[8],
+      suspendedUntil: r[161] ? Number(r[161]) : null
     });
   }
 
@@ -785,4 +801,62 @@ function getAllUsersProgress(req) {
   }
 
   return { success: true, users: result };
+}
+
+// ============================================================
+//  ACTION: suspendUser
+//  Payload: adminPassword, usn, suspendUntil (epoch ms)
+// ============================================================
+function suspendUser(req) {
+  if (req.adminPassword !== "The*Software*Society@581329") return { success: false, message: "Unauthorized." };
+
+  var sheet = getSheet(USERS_SHEET);
+  var rowIdx = findUserRow(sheet, req.usn);
+  if (rowIdx === -1) return { success: false, message: "USN not found." };
+
+  sheet.getRange(rowIdx, 162).setValue(Number(req.suspendUntil));
+  refreshLeaderboard(); // immediately remove from leaderboard
+  return { success: true, message: "User " + req.usn + " suspended until " + new Date(Number(req.suspendUntil)).toISOString() };
+}
+
+// ============================================================
+//  ACTION: unsuspendUser
+//  Payload: adminPassword, usn
+// ============================================================
+function unsuspendUser(req) {
+  if (req.adminPassword !== "The*Software*Society@581329") return { success: false, message: "Unauthorized." };
+
+  var sheet = getSheet(USERS_SHEET);
+  var rowIdx = findUserRow(sheet, req.usn);
+  if (rowIdx === -1) return { success: false, message: "USN not found." };
+
+  sheet.getRange(rowIdx, 162).clearContent();
+  refreshLeaderboard(); // immediately restore to leaderboard
+  return { success: true, message: "User " + req.usn + " unsuspended." };
+}
+
+// ============================================================
+//  ACTION: adminSetProgress
+//  Payload: adminPassword, usn, solvedArray (array of 0/1, length 150)
+// ============================================================
+function adminSetProgress(req) {
+  if (req.adminPassword !== "The*Software*Society@581329") return { success: false, message: "Unauthorized." };
+
+  var sheet = getSheet(USERS_SHEET);
+  var rowIdx = findUserRow(sheet, req.usn);
+  if (rowIdx === -1) return { success: false, message: "USN not found." };
+
+  var arr = req.solvedArray;
+  if (!arr || arr.length !== TOTAL_PROBLEMS) return { success: false, message: "Invalid solvedArray length." };
+
+  // Write Q1-Q150 values
+  var range = sheet.getRange(rowIdx, Q_START_COL, 1, TOTAL_PROBLEMS);
+  var values = [arr.map(function(v) { return v === 1 ? 1 : 0; })];
+  range.setValues(values);
+
+  SpreadsheetApp.flush();
+  var totalSolved = sheet.getRange(rowIdx, 8).getValue();
+  refreshLeaderboard();
+
+  return { success: true, totalSolved: totalSolved };
 }
