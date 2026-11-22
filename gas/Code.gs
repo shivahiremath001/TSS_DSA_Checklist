@@ -134,7 +134,7 @@ function setupSheets() {
 // Also allow GET for quick health-check from browser
 function doGet(e) {
   return ContentService
-    .createTextOutput(JSON.stringify({ status: "DSA Tracker API is live" }))
+    .createTextOutput(JSON.stringify({ status: "DSA Tracker API is live", version: "v2.1-suspend-admin-edit" }))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
